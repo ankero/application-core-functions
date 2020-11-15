@@ -4,7 +4,10 @@ import * as admin from "firebase-admin";
 // otherwise functions will complain about having multiple or no firebase admin
 admin.initializeApp();
 
-import { userProfileListener } from "./userProfileListener";
-import { userCreationListener } from "./userListener";
+import {
+  userCreationListener,
+  userDeletionListener,
+  userProfileListener,
+} from "./userListeners";
 
-export { userProfileListener, userCreationListener };
+export { userProfileListener, userCreationListener, userDeletionListener };
