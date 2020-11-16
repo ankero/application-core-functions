@@ -10,6 +10,10 @@ interface ApplicationUserConfiguration {
 }
 
 interface ApplicationPrivateConfiguration {
+  backgroundColor: string;
+}
+
+interface ApplicationAuditLogConfiguration {
   auditLogEvents: Array<LogConfiguration>;
 }
 
@@ -20,7 +24,7 @@ interface ProfileItem {
 
 interface LogConfiguration {
   event: string;
-  logTarget: string;
+  logAddress: string;
 }
 
 export async function getApplicationUserConfiguration(): Promise<
@@ -48,12 +52,30 @@ export async function getApplicationPrivateConfiguration(): Promise<
     const doc = await db
       .doc(DATABASE_ADDRESSES.applicationPrivateConfiguration)
       .get();
-    const empty = { auditLogEvents: [] };
+    const empty = { backgroundColor: "" };
     if (!doc.exists) {
       console.warn("Document does not exist.");
       return empty;
     }
     return (doc.data() as ApplicationPrivateConfiguration) || empty;
+  } catch (error) {
+    throw Error(error);
+  }
+}
+
+export async function getApplicationAuditLogConfiguration(): Promise<
+  ApplicationAuditLogConfiguration
+> {
+  try {
+    const doc = await db
+      .doc(DATABASE_ADDRESSES.applicationAuditLogConfiguration)
+      .get();
+    const empty = { auditLogEvents: [] };
+    if (!doc.exists) {
+      console.warn("Document does not exist.");
+      return empty;
+    }
+    return (doc.data() as ApplicationAuditLogConfiguration) || empty;
   } catch (error) {
     throw Error(error);
   }

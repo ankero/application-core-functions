@@ -7,9 +7,8 @@ export const AUDIT_LOG_EVENTS = {
 export const DATABASE_ADDRESSES = {
   applicationUserConfiguration: "/application/USER_CONFIGURATION",
   applicationPrivateConfiguration: "/application/PRIVATE_CONFIGURATION",
-  applicationAuditLog: "/application/AUDIT_LOG/AUDIT_LOG/{logId}",
+  applicationAuditLogConfiguration: "/application/AUDIT_LOG",
   user: "/users/{userId}",
-  userAuditLog: "/users/{userId}/AUDIT_LOG/{logId}",
   userPublicProfile: "/users/{userId}/PUBLIC_PROFILE/profile",
 };
 export const STORAGE_ADDRESSES = {
