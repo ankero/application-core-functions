@@ -4,6 +4,7 @@ import { AUDIT_LOG_EVENTS, DATABASE_ADDRESSES } from "./constants";
 import { createAuditLogEvent } from "./services/auditLog";
 import { getApplicationUserConfiguration } from "./services/application";
 import {
+  buildUserPublicProfile,
   createOrUpdateProfile,
   createOrUpdateProfilePublicData,
   deleteProfile,
@@ -57,15 +58,10 @@ export const userProfileListener = functions.firestore
 
       // Set public profile based on profile settings
       if (profileSettings && profileSettings.userFields) {
-        const publicProfile = {} as any;
-        const publicKeys = profileSettings.userFields.filter(
-          (item) => item.public
+        const publicProfile = buildUserPublicProfile(
+          { ...document, id: userId },
+          profileSettings
         );
-        publicKeys.forEach((item) => {
-          if (document && document[item.fieldKey]) {
-            publicProfile[item.fieldKey] = document[item.fieldKey];
-          }
-        });
         await createOrUpdateProfilePublicData(userId, publicProfile);
       }
 

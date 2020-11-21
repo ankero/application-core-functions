@@ -9,11 +9,13 @@ import {
   userDeletionListener,
   userProfileListener,
 } from "./userListeners";
+import { groupListener } from "./groupListeners";
 import { identifies } from "./analytics";
 
 export {
   userProfileListener,
   userCreationListener,
   userDeletionListener,
+  groupListener,
   identifies,
 };
