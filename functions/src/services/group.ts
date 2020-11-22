@@ -1,27 +1,13 @@
 import * as admin from "firebase-admin";
 import { DATABASE_ADDRESSES } from "../constants";
-
-// interface User {
-//   uid: string;
-//   publicName?: string;
-//   publicPhotoUrl?: string;
-// }
-
-// interface Group {
-//   createdBy: string;
-//   members: Array<string>;
-//   editors: Array<string>;
-//   formattedMemberList: Array<User>;
-//   addMembers: Array<string> | any;
-//   removeMembers: Array<string> | any;
-// }
+import { Group } from "../interfaces";
 
 // database
 const db = admin.firestore();
 
 export async function createOrUpdateGroup(
   groupId: string,
-  data: any
+  data: Group
 ): Promise<void> {
   try {
     await db

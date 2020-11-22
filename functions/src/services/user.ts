@@ -1,17 +1,14 @@
 import * as admin from "firebase-admin";
 import { DATABASE_ADDRESSES, DATABASE_COLLECTIONS } from "../constants";
 import { isEmailOrNumber } from "./validators";
-
-interface User {
-  id: string;
-}
+import { PublicUserProfile, User, UserIdentifierType } from "../interfaces";
 
 // database
 const db = admin.firestore();
 
 export async function createOrUpdateProfile(
   userId: string,
-  data: object
+  data: User
 ): Promise<void> {
   try {
     await db
@@ -24,7 +21,7 @@ export async function createOrUpdateProfile(
 
 export async function createOrUpdateProfilePublicData(
   userId: string,
-  data: object
+  data: PublicUserProfile
 ): Promise<void> {
   try {
     await db
@@ -43,7 +40,9 @@ export async function deleteProfile(userId: string) {
   }
 }
 
-export async function getUserPublicProfile(userId: string): Promise<any> {
+export async function getUserPublicProfile(
+  userId: string
+): Promise<PublicUserProfile | null> {
   try {
     const doc = await db
       .doc(DATABASE_ADDRESSES.userPublicProfile.replace("{userId}", userId))
@@ -52,13 +51,13 @@ export async function getUserPublicProfile(userId: string): Promise<any> {
       console.warn(`User public profile does not exist: ${userId}`);
       return null;
     }
-    return doc.data();
+    return doc.data() as PublicUserProfile;
   } catch (error) {
     throw error;
   }
 }
 
-export async function getUserByEmail(email: string): Promise<any> {
+export async function getUserByEmail(email: string): Promise<User | any> {
   try {
     const querySnapshot = await db
       .collection(DATABASE_COLLECTIONS.users)
@@ -69,7 +68,7 @@ export async function getUserByEmail(email: string): Promise<any> {
       console.warn(`User with email ${email} does not exist`);
       return null;
     }
-    console.log(`ITEM ID ${querySnapshot.docs[0].id}`);
+
     return {
       ...querySnapshot.docs[0].data(),
       id: querySnapshot.docs[0].id,
@@ -79,7 +78,7 @@ export async function getUserByEmail(email: string): Promise<any> {
   }
 }
 
-export async function getUserByNumber(number: string): Promise<any> {
+export async function getUserByNumber(number: string): Promise<User | null> {
   try {
     const querySnapshot = await db
       .collection(DATABASE_COLLECTIONS.users)
@@ -90,8 +89,6 @@ export async function getUserByNumber(number: string): Promise<any> {
       console.warn(`User with number ${number} does not exist`);
       return null;
     }
-
-    console.log(`ITEM ID ${querySnapshot.docs[0].id}`);
 
     return {
       ...querySnapshot.docs[0].data(),
@@ -104,19 +101,28 @@ export async function getUserByNumber(number: string): Promise<any> {
 
 export async function getUsersBasedOnEmailOrNumber(
   emailOrNumber: string
-): Promise<User | void> {
+): Promise<any> {
   const { email, number } = isEmailOrNumber(emailOrNumber);
-  let user;
+  let type, user;
   if (email) {
+    type = UserIdentifierType.EMAIL;
     user = await getUserByEmail(email);
   } else if (number) {
+    type = UserIdentifierType.NUMBER;
     user = await getUserByNumber(number);
   }
 
-  return user;
+  return {
+    emailOrNumber,
+    type: user ? UserIdentifierType.USERID : type,
+    user,
+  };
 }
 
-export function buildUserPublicProfile(user: any, profileSettings: any) {
+export function buildUserPublicProfile(
+  user: any,
+  profileSettings: any
+): PublicUserProfile {
   const publicProfile = {
     id: user.id,
   } as any;
@@ -128,5 +134,5 @@ export function buildUserPublicProfile(user: any, profileSettings: any) {
       publicProfile[item.fieldKey] = user[item.fieldKey];
     }
   });
-  return publicProfile;
+  return publicProfile as PublicUserProfile;
 }

@@ -16,9 +16,10 @@ export const userCreationListener = functions.auth
   .onCreate(async (user) => {
     await createOrUpdateProfile(user.uid, {
       email: user.email,
+      phoneNumber: user.phoneNumber,
       displayName: user.displayName,
       photoURL: user.photoURL,
-      createdAt: new Date(),
+      createdAtMillis: Date.now(),
     });
     await createAuditLogEvent({
       event: AUDIT_LOG_EVENTS.USER_ACCOUNT_CREATED,

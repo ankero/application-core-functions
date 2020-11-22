@@ -1,35 +1,16 @@
 import * as admin from "firebase-admin";
 import { DATABASE_ADDRESSES } from "../constants";
-
+import {
+  ApplicationUserConfiguration,
+  ApplicationPrivateConfiguration,
+  ApplicationAuditLogConfiguration,
+} from "../interfaces";
 // database
 const db = admin.firestore();
 
 // TypeScript Interfaces
-interface ApplicationUserConfiguration {
-  userFields: Array<ProfileItem>;
-}
 
-interface ApplicationPrivateConfiguration {
-  backgroundColor: string;
-}
-
-interface ApplicationAuditLogConfiguration {
-  auditLogEvents: Array<LogConfiguration>;
-}
-
-interface ProfileItem {
-  public: boolean;
-  fieldKey: string;
-}
-
-interface LogConfiguration {
-  event: string;
-  logAddress: string;
-}
-
-export async function getApplicationUserConfiguration(): Promise<
-  ApplicationUserConfiguration
-> {
+export async function getApplicationUserConfiguration(): Promise<ApplicationUserConfiguration> {
   try {
     const doc = await db
       .doc(DATABASE_ADDRESSES.applicationUserConfiguration)
@@ -45,9 +26,7 @@ export async function getApplicationUserConfiguration(): Promise<
   }
 }
 
-export async function getApplicationPrivateConfiguration(): Promise<
-  ApplicationPrivateConfiguration
-> {
+export async function getApplicationPrivateConfiguration(): Promise<ApplicationPrivateConfiguration> {
   try {
     const doc = await db
       .doc(DATABASE_ADDRESSES.applicationPrivateConfiguration)
@@ -63,9 +42,7 @@ export async function getApplicationPrivateConfiguration(): Promise<
   }
 }
 
-export async function getApplicationAuditLogConfiguration(): Promise<
-  ApplicationAuditLogConfiguration
-> {
+export async function getApplicationAuditLogConfiguration(): Promise<ApplicationAuditLogConfiguration> {
   try {
     const doc = await db
       .doc(DATABASE_ADDRESSES.applicationAuditLogConfiguration)

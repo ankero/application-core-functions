@@ -1,18 +1,9 @@
 import * as admin from "firebase-admin";
 import { getApplicationAuditLogConfiguration } from "./application";
+import { AuditLog, LogConfiguration } from "../interfaces";
 
 // database
 const db = admin.firestore();
-
-interface AuditLog {
-  event: string;
-  userId?: string;
-}
-
-interface LogConfiguration {
-  event: string;
-  logAddress: string;
-}
 
 async function getLogEventConfiguration({
   event,

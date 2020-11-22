@@ -7,6 +7,7 @@ export const AUDIT_LOG_EVENTS = {
 export const DATABASE_COLLECTIONS = {
   users: "users",
   groups: "groups",
+  invites: "invites",
 };
 export const DATABASE_ADDRESSES = {
   applicationUserConfiguration: "/application/USER_CONFIGURATION",
@@ -15,6 +16,7 @@ export const DATABASE_ADDRESSES = {
   user: "/users/{userId}",
   userPublicProfile: "/users/{userId}/PUBLIC_PROFILE/profile",
   group: "/groups/{groupId}",
+  invite: "/invites/{inviteId}",
 };
 export const STORAGE_ADDRESSES = {
   userPublicFiles: "users/{userId}/PUBLIC/",
