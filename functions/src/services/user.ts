@@ -51,7 +51,10 @@ export async function getUserPublicProfile(
       console.warn(`User public profile does not exist: ${userId}`);
       return null;
     }
-    return doc.data() as PublicUserProfile;
+    return {
+      ...doc.data(),
+      id: userId,
+    } as PublicUserProfile;
   } catch (error) {
     throw error;
   }

@@ -1,13 +1,13 @@
 import * as admin from "firebase-admin";
 import { DATABASE_ADDRESSES, DATABASE_COLLECTIONS } from "../constants";
-import { Invite } from "../interfaces";
+import { Invite, UserIdentifierType } from "../interfaces";
 
 // database
 const db = admin.firestore();
 
 export async function getInviteByInvitedUserIdentifier(
   invitedUserIdentifier: string,
-  invitedUserIdentifierType: string
+  invitedUserIdentifierType: UserIdentifierType
 ): Promise<Invite | null> {
   try {
     const querySnapshot = await db
@@ -32,13 +32,35 @@ export async function getInviteByInvitedUserIdentifier(
   }
 }
 
+export async function createInvite(invite: Invite): Promise<void> {
+  try {
+    await db.collection(DATABASE_COLLECTIONS.invites).add(invite);
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function createOrUpdateInvite(
   inviteId: string,
   invite: Invite
 ): Promise<void> {
   try {
+    let id = inviteId;
+    if (!inviteId) {
+      const existingInvite = await getInviteByInvitedUserIdentifier(
+        invite.invitedUserIdentifier,
+        invite.invitedUserIdentifierType
+      );
+
+      if (!existingInvite) {
+        return await createInvite(invite);
+      }
+
+      id = existingInvite.id as string;
+    }
+
     await db
-      .doc(DATABASE_ADDRESSES.invite.replace("{inviteId}", inviteId))
+      .doc(DATABASE_ADDRESSES.invite.replace("{inviteId}", id))
       .set(invite, { merge: true });
   } catch (error) {
     throw error;

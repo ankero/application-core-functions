@@ -5,14 +5,11 @@ import { Group } from "../interfaces";
 // database
 const db = admin.firestore();
 
-export async function createOrUpdateGroup(
-  groupId: string,
-  data: Group
-): Promise<void> {
+export async function updateGroup(groupId: string, data: Group): Promise<void> {
   try {
     await db
       .doc(DATABASE_ADDRESSES.group.replace("{groupId}", groupId))
-      .set(data, { merge: true });
+      .set({ ...data, processed: true }, { merge: true });
   } catch (error) {
     throw error;
   }

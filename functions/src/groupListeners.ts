@@ -1,14 +1,19 @@
 import * as functions from "firebase-functions";
 
 import { DATABASE_ADDRESSES } from "./constants";
-import { getApplicationUserConfiguration } from "./services/application";
 import {
-  buildUserPublicProfile,
+  getUserPublicProfile,
   getUsersBasedOnEmailOrNumber,
 } from "./services/user";
-import { createOrUpdateGroup } from "./services/group";
+import { updateGroup } from "./services/group";
 import { createOrUpdateInvite } from "./services/invites";
-import { Group, InviteStatus, InviteTargetType } from "./interfaces";
+import {
+  Group,
+  InviteStatus,
+  InviteTargetType,
+  PublicUserProfile,
+  UserIdentifierType,
+} from "./interfaces";
 
 function handleRemoveMembers(document: any): any {
   let removeMembers = [...document.removeMembers];
@@ -44,11 +49,11 @@ function handleRemoveMembers(document: any): any {
   };
 }
 
-async function handleAddMembers(document: any): Promise<any> {
-  let formattedMemberList = [...document.formattedMemberList];
-
-  // Get user profile settings
-  const profileSettings = await getApplicationUserConfiguration();
+async function handleAddMembers(
+  document: any,
+  groupId: string
+): Promise<number> {
+  let pendingInvites = 0;
 
   // Build promises
   const newMemberPromises = document.addMembers.map(
@@ -60,45 +65,26 @@ async function handleAddMembers(document: any): Promise<any> {
   // Get all users
   await Promise.all(newMemberPromises).then((responses: any[]) => {
     responses.forEach((response: any) => {
-      if (!response.user) {
-        // Send blind invite
+      if (!response.user || !document.members.includes(response.user.id)) {
+        pendingInvites = pendingInvites + 1;
+        const invitedUserIdentifierType = response.user
+          ? UserIdentifierType.USERID
+          : response.type;
+        const invitedUserIdentifier = response.user
+          ? response.user.id
+          : response.emailOrNumber;
+        // Record invite
         invitesPromises.push(
           createOrUpdateInvite("", {
             invitedBy: document.updatedBy || document.createdBy,
             inviteStatus: InviteStatus.PENDING,
-            invitedUserIdentifierType: response.type,
-            invitedUserIdentifier: response.emailOrNumber,
+            invitedUserIdentifierType,
+            invitedUserIdentifier,
+            invitedUserLiteral: response.emailOrNumber,
             inviteTargetType: InviteTargetType.GROUP,
-            inviteTargetId: document.id,
+            inviteTargetId: groupId,
           })
         );
-      } else if (!document.members.includes(response.user.id)) {
-        // Send invite to user by id
-        invitesPromises.push(
-          createOrUpdateInvite("", {
-            invitedBy: document.updatedBy || document.createdBy,
-            inviteStatus: InviteStatus.PENDING,
-            invitedUserIdentifierType: response.type,
-            invitedUserIdentifier: response.emailOrNumber,
-            inviteTargetType: InviteTargetType.GROUP,
-            inviteTargetId: document.id,
-          })
-        );
-
-        invitesPromises.push(
-          createOrUpdateInvite(response.user.id, response.type)
-        );
-      } else {
-        // Existing user, lets just update the profile
-        // Build public profile and push to formattedMemberList
-        const publicProfile = buildUserPublicProfile(
-          response.user,
-          profileSettings
-        );
-        formattedMemberList = formattedMemberList.map((member: any) => {
-          if (member.id !== publicProfile.id) return member;
-          return publicProfile;
-        });
       }
     });
   });
@@ -107,10 +93,36 @@ async function handleAddMembers(document: any): Promise<any> {
     await Promise.all(invitesPromises);
   }
 
-  return {
-    ...document,
-    formattedMemberList,
-  };
+  return pendingInvites;
+}
+
+async function populatePublicProfiles(
+  document: any
+): Promise<Array<PublicUserProfile>> {
+  try {
+    const missingProfiles = document.members.filter((memberId: string) => {
+      return !document.formattedMemberList.find(
+        (formattedMember: PublicUserProfile) => formattedMember.id === memberId
+      );
+    });
+
+    if (missingProfiles.length === 0) {
+      return document.formattedMemberList;
+    }
+
+    const getPublicProfilesPromises = missingProfiles.map(getUserPublicProfile);
+
+    await Promise.all(getPublicProfilesPromises).then((profiles) => {
+      profiles.forEach((profile) => {
+        if (!profile) return;
+        document.formattedMemberList.push(profile);
+      });
+    });
+
+    return document.formattedMemberList;
+  } catch (error) {
+    return document.formattedMemberList;
+  }
 }
 
 export const groupListener = functions.firestore
@@ -124,16 +136,18 @@ export const groupListener = functions.firestore
       ? (change.after.data() as Group)
       : null;
 
-    if (!document) return;
+    // Check if the document was deleted OR has it already been processed
+    if (!document || document.processed) return;
 
     // Init all required values
     let workingDocument = {
       ...document,
-      id: groupId,
       formattedMemberList: document.formattedMemberList || [],
       editors: document.editors || [document.createdBy],
       members: document.members || [],
       addMembers: document.addMembers || [],
+      pendingInvites: 0,
+      processingError: "",
     };
 
     try {
@@ -144,22 +158,29 @@ export const groupListener = functions.firestore
 
       // Add members that are indicated to be added
       if (document.addMembers && document.addMembers.length > 0) {
-        workingDocument = await handleAddMembers(workingDocument);
+        workingDocument.pendingInvites = await handleAddMembers(
+          workingDocument,
+          groupId
+        );
       }
+
+      // Populate formattedMemberList
+      workingDocument.formattedMemberList = await populatePublicProfiles(
+        workingDocument
+      );
 
       // Create new document and set addMembers and removeMembers to empty
       const newDocument = {
         ...workingDocument,
         addMembers: [],
         removeMembers: [],
-        processed: true,
       } as Group;
 
-      await createOrUpdateGroup(groupId, newDocument);
+      await updateGroup(groupId, newDocument);
     } catch (error) {
       console.error(`Unable to process group with groupId: ${groupId}`, error);
       try {
-        await createOrUpdateGroup(groupId, {
+        await updateGroup(groupId, {
           ...document,
           processingError: error.toString(),
         });

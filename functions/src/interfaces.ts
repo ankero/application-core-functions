@@ -27,6 +27,7 @@ export interface Invite {
   invitedBy: PublicUserProfile;
   invitedUserIdentifier: string;
   invitedUserIdentifierType: UserIdentifierType;
+  invitedUserLiteral: string;
   inviteStatus: InviteStatus;
 }
 
