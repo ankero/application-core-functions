@@ -9,7 +9,7 @@ export async function updateGroup(groupId: string, data: Group): Promise<void> {
   try {
     await db
       .doc(DATABASE_ADDRESSES.group.replace("{groupId}", groupId))
-      .set({ ...data, processed: true }, { merge: true });
+      .set({ ...data, processing: false }, { merge: true });
   } catch (error) {
     throw error;
   }

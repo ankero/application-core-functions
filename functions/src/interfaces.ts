@@ -14,17 +14,32 @@ export enum UserIdentifierType {
   NUMBER = "phoneNumber",
 }
 
+export enum UserRoleType {
+  OWNER = "owner",
+  EDITOR = "editor",
+  MEMBER = "member",
+  INVITED = "invited",
+}
+
+export enum UserRoleNumbers {
+  OWNER = 3,
+  EDITOR = 2,
+  MEMBER = 1,
+  INVITED = 0,
+}
+
 export interface PublicUserProfile {
   id: string;
   publicName?: string;
   publicPhotoUrl?: string;
+  role?: UserRoleType | null;
 }
 
 export interface Invite {
   id?: string;
   inviteTargetId: string;
   inviteTargetType: InviteTargetType;
-  invitedBy: PublicUserProfile;
+  invitedBy: string;
   invitedUserIdentifier: string;
   invitedUserIdentifierType: UserIdentifierType;
   invitedUserLiteral: string;
@@ -44,13 +59,12 @@ export interface User {
 }
 
 export interface Group {
+  name: string;
+  description?: string;
   createdBy: string;
+  updatedBy?: string;
   members: Array<string>;
-  editors: Array<string>;
   formattedMemberList: Array<User>;
-  addMembers?: Array<string> | any;
-  removeMembers?: Array<string> | any;
-  processed: Boolean;
   processingError?: string | null;
 }
 

@@ -40,6 +40,61 @@ export async function createInvite(invite: Invite): Promise<void> {
   }
 }
 
+export async function deleteInviteForUserPerEntity(
+  inviteTargetId: string,
+  inviteTargetType: string,
+  invitedUserLiteral: string
+): Promise<void> {
+  try {
+    const querySnapshot = await db
+      .collection(DATABASE_COLLECTIONS.invites)
+      .where("inviteTargetId", "==", inviteTargetId)
+      .where("inviteTargetType", "==", inviteTargetType)
+      .where("invitedUserLiteral", "==", invitedUserLiteral)
+      .get();
+
+    if (querySnapshot.empty) {
+      console.log(
+        `No invite for user: ${invitedUserLiteral} with invite details: inviteTargetId:${inviteTargetId}, inviteTargetType:${inviteTargetType}`
+      );
+    } else {
+      const deletePromises = [] as Array<Promise<any>>;
+      querySnapshot.forEach((snapshot) =>
+        deletePromises.push(snapshot.ref.delete())
+      );
+      await Promise.all(deletePromises);
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function deleteInvitesForEntity(
+  inviteTargetId: string,
+  inviteTargetType: string
+): Promise<void> {
+  try {
+    const querySnapshot = await db
+      .collection(DATABASE_COLLECTIONS.invites)
+      .where("inviteTargetId", "==", inviteTargetId)
+      .where("inviteTargetType", "==", inviteTargetType)
+      .get();
+    if (querySnapshot.empty) {
+      console.log(
+        `No invites found for deletion. inviteTargetId:${inviteTargetId}, inviteTargetType:${inviteTargetType}`
+      );
+    } else {
+      const deletePromises = [] as Array<Promise<any>>;
+      querySnapshot.forEach((snapshot) =>
+        deletePromises.push(snapshot.ref.delete())
+      );
+      await Promise.all(deletePromises);
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function createOrUpdateInvite(
   inviteId: string,
   invite: Invite
