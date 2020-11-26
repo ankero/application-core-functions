@@ -19,6 +19,7 @@ export enum UserRoleType {
   EDITOR = "editor",
   MEMBER = "member",
   INVITED = "invited",
+  REJECTED = "rejected",
 }
 
 export enum UserRoleNumbers {
@@ -26,6 +27,7 @@ export enum UserRoleNumbers {
   EDITOR = 2,
   MEMBER = 1,
   INVITED = 0,
+  REJECTED = 99,
 }
 
 export interface PublicUserProfile {
@@ -35,15 +37,23 @@ export interface PublicUserProfile {
   role?: UserRoleType | null;
 }
 
+export interface InviteTargetPreview {
+  name: string;
+  inviterPublicName: string;
+  inviterPublicPhotoUrl?: string;
+}
+
 export interface Invite {
   id?: string;
   inviteTargetId: string;
   inviteTargetType: InviteTargetType;
+  inviteTargetPreview: InviteTargetPreview;
   invitedBy: string;
   invitedUserIdentifier: string;
   invitedUserIdentifierType: UserIdentifierType;
   invitedUserLiteral: string;
   inviteStatus: InviteStatus;
+  error?: string;
 }
 
 export interface User {

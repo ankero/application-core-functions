@@ -1,11 +1,12 @@
 import * as admin from "firebase-admin";
 import { DATABASE_ADDRESSES } from "../constants";
-import { Group, InviteTargetType } from "../interfaces";
+import { Group, InviteTargetPreview, InviteTargetType } from "../interfaces";
 import {
   compareOldAndNewEntityMembers,
   handleAddMultipleMembersToEntity,
   handleRemoveMultipleMembersFromEntity,
 } from "./entityMemberHandlers";
+import { getUserPublicProfile } from "./user";
 
 // database
 const db = admin.firestore();
@@ -13,7 +14,7 @@ const db = admin.firestore();
 export async function updateGroup(groupId: string, data: Group): Promise<void> {
   try {
     await db
-      .doc(DATABASE_ADDRESSES.group.replace("{groupId}", groupId))
+      .doc(DATABASE_ADDRESSES.group.replace("{entityId}", groupId))
       .set({ ...data, processing: false }, { merge: true });
   } catch (error) {
     throw error;
@@ -34,11 +35,20 @@ export async function handleNewGroupCreated(
       }
     });
 
+    const inviter = await getUserPublicProfile(group.createdBy);
+
+    const inviteTargetPreview = {
+      name: group.name,
+      inviterPublicName: inviter?.publicName || "Unnamed",
+      inviterPublicPhotoUrl: inviter?.publicPhotoUrl,
+    } as InviteTargetPreview;
+
     await handleAddMultipleMembersToEntity(
       membersForNewGroup,
       groupId,
       InviteTargetType.GROUP,
-      group.createdBy
+      group.createdBy,
+      inviteTargetPreview
     );
 
     return true;
@@ -77,11 +87,22 @@ export async function handleExistingGroupUpdated(
 
     // Add members that are indicated to be added
     if (addedMembers.length > 0) {
+      const inviter = await getUserPublicProfile(
+        group.updatedBy || group.createdBy
+      );
+
+      const inviteTargetPreview = {
+        name: group.name,
+        inviterPublicName: inviter?.publicName || "Unnamed",
+        inviterPublicPhotoUrl: inviter?.publicPhotoUrl,
+      } as InviteTargetPreview;
+
       await handleAddMultipleMembersToEntity(
         addedMembers,
         groupId,
         InviteTargetType.GROUP,
-        group.updatedBy || group.createdBy
+        group.updatedBy || group.createdBy,
+        inviteTargetPreview
       );
     }
 

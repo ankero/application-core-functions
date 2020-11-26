@@ -6,6 +6,7 @@ import {
   UserRoleType,
   UserRoleNumbers,
   OldAndNewEntityMemberComparison,
+  InviteTargetPreview,
 } from "../interfaces";
 import { createOrUpdateInvite, deleteInviteForUserPerEntity } from "./invites";
 import { getUserPublicProfile, getUsersBasedOnEmailOrNumber } from "./user";
@@ -50,11 +51,19 @@ export async function handleAddMultipleMembersToEntity(
   addedMembers: Array<any>,
   inviteTargetId: string,
   inviteTargetType: InviteTargetType,
-  invitedBy: string
+  invitedBy: string,
+  inviteTargetPreview: InviteTargetPreview
 ): Promise<void> {
   try {
+    const membersWhoNeedInvites = addedMembers.filter((newMember: any) => {
+      return newMember[Object.keys(newMember)[0]] === UserRoleNumbers.INVITED;
+    });
+    console.log(
+      `Users who need invites. ${JSON.stringify(membersWhoNeedInvites)}`
+    );
+
     // Build promises
-    const newMemberPromises = addedMembers.map((newMember: any) => {
+    const newMemberPromises = membersWhoNeedInvites.map((newMember: any) => {
       const emailOrNumber = Object.keys(newMember)[0];
       return getUsersBasedOnEmailOrNumber(emailOrNumber);
     });
@@ -85,6 +94,7 @@ export async function handleAddMultipleMembersToEntity(
               invitedUserLiteral: response.emailOrNumber,
               inviteTargetType,
               inviteTargetId,
+              inviteTargetPreview,
             })
           );
         }
@@ -147,7 +157,7 @@ export function compareOldAndNewEntityMembers(
       memberId
     );
     if (!foundInPrevDocument) {
-      addedMembers.push({ [memberId]: oldEntity.members[memberId] });
+      addedMembers.push({ [memberId]: newEntity.members[memberId] });
     }
   });
 

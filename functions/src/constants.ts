@@ -15,7 +15,7 @@ export const DATABASE_ADDRESSES = {
   applicationAuditLogConfiguration: "/application/AUDIT_LOG",
   user: "/users/{userId}",
   userPublicProfile: "/users/{userId}/PUBLIC_PROFILE/profile",
-  group: "/groups/{groupId}",
+  group: "/groups/{entityId}",
   invite: "/invites/{inviteId}",
 };
 export const STORAGE_ADDRESSES = {

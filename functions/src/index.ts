@@ -11,6 +11,7 @@ import {
 } from "./userListeners";
 import { groupListener } from "./groupListeners";
 import { identifies } from "./analytics";
+import { invitationListener } from "./invitationListeners";
 
 export {
   userProfileListener,
@@ -18,4 +19,5 @@ export {
   userDeletionListener,
   groupListener,
   identifies,
+  invitationListener,
 };

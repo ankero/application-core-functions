@@ -13,7 +13,7 @@ import { getPublicProfilesForMemberList } from "./services/entityMemberHandlers"
 export const groupListener = functions.firestore
   .document(DATABASE_ADDRESSES.group)
   .onWrite(async (change, context) => {
-    const { groupId } = context.params;
+    const { entityId } = context.params;
     const group = change.after.exists ? (change.after.data() as Group) : null;
     const prevGroup = change.before.exists
       ? (change.before.data() as Group)
@@ -24,14 +24,14 @@ export const groupListener = functions.firestore
     try {
       if (!group) {
         console.log("Group has been deleted, processing...");
-        await deleteInvitesForEntity(groupId, InviteTargetType.GROUP);
+        await deleteInvitesForEntity(entityId, InviteTargetType.GROUP);
       } else if (!prevGroup) {
         console.log("New group has been created, processing...");
-        hasChangesInMembers = await handleNewGroupCreated(groupId, group);
+        hasChangesInMembers = await handleNewGroupCreated(entityId, group);
       } else if (group && prevGroup) {
         console.log("Existing group has been updated, processing...");
         hasChangesInMembers = await handleExistingGroupUpdated(
-          groupId,
+          entityId,
           group,
           prevGroup
         );
@@ -45,22 +45,22 @@ export const groupListener = functions.firestore
           group.members
         );
 
-        await updateGroup(groupId, {
+        await updateGroup(entityId, {
           ...group,
           formattedMemberList,
         });
       }
     } catch (error) {
-      console.error(`Unable to process group with groupId: ${groupId}`, error);
+      console.error(`Unable to process group with groupId: ${entityId}`, error);
 
       try {
-        await updateGroup(groupId, {
+        await updateGroup(entityId, {
           ...group,
           processingError: error.toString(),
         } as Group);
       } catch (recordErrorError) {
         console.error(
-          `Unable to record error to group document with groupId: ${groupId}`
+          `Unable to record error to group document with groupId: ${entityId}`
         );
         throw recordErrorError;
       }

@@ -1,10 +1,13 @@
 import * as admin from "firebase-admin";
+
 import { DATABASE_ADDRESSES, DATABASE_COLLECTIONS } from "../constants";
 import {
   Invite,
+  InviteStatus,
   InviteTargetType,
   User,
   UserIdentifierType,
+  UserRoleNumbers,
 } from "../interfaces";
 
 // database
@@ -158,6 +161,59 @@ export async function claimInvitesForUser(user: User): Promise<void> {
       );
       await Promise.all(deletePromises);
     }
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function handleInvitationResponse(
+  inviteId: string,
+  invite: Invite
+): Promise<void> {
+  try {
+    const rootAddress = DATABASE_ADDRESSES[invite.inviteTargetType].replace(
+      "{entityId}",
+      invite.inviteTargetId
+    );
+
+    const doc = await db.doc(rootAddress).get();
+    if (!doc.exists) {
+      console.log(
+        `Entity refered in invite does not exist: ${JSON.stringify(invite)}`
+      );
+      await createOrUpdateInvite(inviteId, {
+        ...invite,
+        error: "invite-target-not-found",
+      });
+      return;
+    }
+
+    const data = doc.data() || {};
+
+    const invitedInMemberList = data.members[invite.invitedUserLiteral];
+
+    const isValidInvite = invitedInMemberList === UserRoleNumbers.INVITED;
+
+    if (!isValidInvite) {
+      console.log(
+        `Invite not valid, member does not exist or invite is not in pending state`
+      );
+      await createOrUpdateInvite(inviteId, {
+        ...invite,
+        error: "invite-not-valid",
+      });
+      return;
+    }
+
+    const newRoleNumber =
+      invite.inviteStatus === InviteStatus.ACCEPTED
+        ? UserRoleNumbers.MEMBER
+        : UserRoleNumbers.REJECTED;
+
+    await doc.ref.update({
+      [`members.${invite.invitedUserIdentifier}`]: newRoleNumber,
+      [`members.${invite.invitedUserLiteral}`]: admin.firestore.FieldValue.delete(),
+    });
   } catch (error) {
     throw error;
   }
