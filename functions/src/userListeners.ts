@@ -49,13 +49,17 @@ export const onUserDeleted = functions.auth.user().onDelete(async (user) => {
 
 export const onUserUpdate = functions.firestore
   .document(DATABASE.users.documents.user)
-  .onUpdate(async (change, context) => {
+  .onWrite(async (change, context) => {
     try {
       // Get userId
       const { entityId } = context.params;
 
       // Get document
-      const document = change.after.exists ? change.after.data() : {};
+      const document = change.after.exists ? change.after.data() : null;
+
+      if (!document) {
+        return;
+      }
 
       // Get user profile settings
       const profileSettings = await getApplicationUserConfiguration();

@@ -220,7 +220,7 @@ export async function handleInvitationResponse(
         {
           members: {
             ...data.members,
-            [`${invite.invitedUserLiteral}`]: UserRoleNumbers.REJECTED,
+            [`${invite.invitedUserLiteral}`]: admin.firestore.FieldValue.delete(),
           },
         },
         { merge: true }

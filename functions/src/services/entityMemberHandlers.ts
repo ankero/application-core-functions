@@ -50,9 +50,6 @@ export async function handleAddMultipleMembersToEntity(
     const membersWhoNeedInvites = addedMembers.filter((newMember: any) => {
       return newMember[Object.keys(newMember)[0]] === UserRoleNumbers.INVITED;
     });
-    console.log(
-      `Users who need invites. ${JSON.stringify(membersWhoNeedInvites)}`
-    );
 
     // Build promises
     const newMemberPromises = membersWhoNeedInvites.map((newMember: any) => {

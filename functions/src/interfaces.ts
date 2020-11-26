@@ -28,7 +28,6 @@ export enum UserRoleNumbers {
   EDITOR = 2,
   MEMBER = 1,
   INVITED = 0,
-  REJECTED = 99,
 }
 
 export enum AuditLogEvents {

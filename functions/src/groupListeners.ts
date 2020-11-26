@@ -67,7 +67,7 @@ export const onGroupUpdate = functions.firestore
         change.after.ref
       );
 
-      if (group && hasChangesInMembers) {
+      if (hasChangesInMembers) {
         const formattedMemberList = await getPublicProfilesForMemberList(
           group.members
         );
