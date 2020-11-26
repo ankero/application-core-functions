@@ -43,7 +43,7 @@ export async function createInvite(invite: Invite): Promise<void> {
   try {
     await db
       .collection(DATABASE_COLLECTIONS.invites)
-      .add({ invite, updatedMillis: Date.now() });
+      .add({ ...invite, updatedMillis: Date.now() });
   } catch (error) {
     throw error;
   }
