@@ -8,24 +8,11 @@ import {
   OldAndNewEntityMemberComparison,
   InviteTargetPreview,
 } from "../interfaces";
-import { createOrUpdateInvite, deleteInviteForUserPerEntity } from "./invites";
+import {
+  createOrUpdateInvite,
+  deleteUnusedInviteForUserPerEntity,
+} from "./invites";
 import { getUserPublicProfile, getUsersBasedOnEmailOrNumber } from "./user";
-
-export async function deleteInviteForSingleUser(
-  memberIdentifier: string,
-  inviteTargetId: string,
-  inviteTargetType: InviteTargetType
-): Promise<any> {
-  try {
-    return await deleteInviteForUserPerEntity(
-      inviteTargetId,
-      inviteTargetType,
-      memberIdentifier
-    );
-  } catch (error) {
-    throw error;
-  }
-}
 
 export async function handleRemoveMultipleMembersFromEntity(
   removedMembers: Array<any>,
@@ -37,7 +24,11 @@ export async function handleRemoveMultipleMembersFromEntity(
     removedMembers.forEach((memberToRemove: any) => {
       const memberId = Object.keys(memberToRemove)[0];
       deleteInvitesPromises.push(
-        deleteInviteForSingleUser(memberId, inviteTargetId, inviteTargetType)
+        deleteUnusedInviteForUserPerEntity(
+          inviteTargetId,
+          inviteTargetType,
+          memberId
+        )
       );
     });
 

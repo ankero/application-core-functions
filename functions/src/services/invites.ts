@@ -52,7 +52,7 @@ export async function createInvite(invite: Invite): Promise<void> {
   }
 }
 
-export async function deleteInviteForUserPerEntity(
+export async function deleteUnusedInviteForUserPerEntity(
   inviteTargetId: string,
   inviteTargetType: string,
   invitedUserLiteral: string
@@ -71,9 +71,11 @@ export async function deleteInviteForUserPerEntity(
       );
     } else {
       const deletePromises = [] as Array<Promise<any>>;
-      querySnapshot.forEach((snapshot) =>
-        deletePromises.push(snapshot.ref.delete())
-      );
+      querySnapshot.forEach((snapshot) => {
+        if (snapshot.data().inviteStatus === InviteStatus.PENDING) {
+          deletePromises.push(snapshot.ref.delete());
+        }
+      });
       await Promise.all(deletePromises);
     }
   } catch (error) {
@@ -202,21 +204,28 @@ export async function handleInvitationResponse(
       return;
     }
 
-    const newRoleNumber =
-      invite.inviteStatus === InviteStatus.ACCEPTED
-        ? UserRoleNumbers.MEMBER
-        : UserRoleNumbers.REJECTED;
-
-    await doc.ref.set(
-      {
-        members: {
-          ...data.members,
-          [`${invite.invitedUserIdentifier}`]: newRoleNumber,
-          [`${invite.invitedUserLiteral}`]: admin.firestore.FieldValue.delete(),
+    if (invite.inviteStatus === InviteStatus.ACCEPTED) {
+      await doc.ref.set(
+        {
+          members: {
+            ...data.members,
+            [`${invite.invitedUserIdentifier}`]: UserRoleNumbers.MEMBER,
+            [`${invite.invitedUserLiteral}`]: admin.firestore.FieldValue.delete(),
+          },
         },
-      },
-      { merge: true }
-    );
+        { merge: true }
+      );
+    } else if (invite.inviteStatus === InviteStatus.REJECTED) {
+      await doc.ref.set(
+        {
+          members: {
+            ...data.members,
+            [`${invite.invitedUserLiteral}`]: UserRoleNumbers.REJECTED,
+          },
+        },
+        { merge: true }
+      );
+    }
   } catch (error) {
     throw error;
   }
