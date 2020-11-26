@@ -94,3 +94,8 @@ export interface ProfileItem {
   public: boolean;
   fieldKey: string;
 }
+
+export interface OldAndNewEntityMemberComparison {
+  removedMembers: Array<any>;
+  addedMembers: Array<any>;
+}
