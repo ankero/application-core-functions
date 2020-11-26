@@ -4,20 +4,18 @@ import * as admin from "firebase-admin";
 // otherwise functions will complain about having multiple or no firebase admin
 admin.initializeApp();
 
-import {
-  userCreationListener,
-  userDeletionListener,
-  userProfileListener,
-} from "./userListeners";
-import { groupListener } from "./groupListeners";
+import { onUserCreated, onUserDeleted, onUserUpdate } from "./userListeners";
+import { onGroupCreate, onGroupDelete, onGroupUpdate } from "./groupListeners";
 import { identifies } from "./analytics";
-import { invitationListener } from "./invitationListeners";
+import { onInvitationUpdate } from "./invitationListeners";
 
 export {
-  userProfileListener,
-  userCreationListener,
-  userDeletionListener,
-  groupListener,
   identifies,
-  invitationListener,
+  onUserUpdate,
+  onUserCreated,
+  onUserDeleted,
+  onGroupCreate,
+  onGroupDelete,
+  onGroupUpdate,
+  onInvitationUpdate,
 };

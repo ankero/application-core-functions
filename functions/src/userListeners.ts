@@ -14,45 +14,41 @@ import {
 import { deleteUserBucket } from "./services/storage";
 import { claimInvitesForUser } from "./services/invites";
 
-export const userCreationListener = functions.auth
-  .user()
-  .onCreate(async (user) => {
-    await createOrUpdateProfile(user.uid, {
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      displayName: user.displayName,
-      publicName: getRandomName(),
-      publicPhotoUrl: getRandomAvatar(user.uid),
-      photoURL: user.photoURL,
-      createdAtMillis: Date.now(),
-    });
-    await claimInvitesForUser(user);
+export const onUserCreated = functions.auth.user().onCreate(async (user) => {
+  await createOrUpdateProfile(user.uid, {
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    displayName: user.displayName,
+    publicName: getRandomName(),
+    publicPhotoUrl: getRandomAvatar(user.uid),
+    photoURL: user.photoURL,
+    createdAtMillis: Date.now(),
+  });
+  await claimInvitesForUser(user);
+  await createAuditLogEvent({
+    event: AUDIT_LOG_EVENTS.USER_ACCOUNT_CREATED,
+    userId: user.uid,
+  });
+});
+
+export const onUserDeleted = functions.auth.user().onDelete(async (user) => {
+  try {
+    await deleteProfile(user.uid);
+
+    await deleteUserBucket(user.uid);
+
     await createAuditLogEvent({
-      event: AUDIT_LOG_EVENTS.USER_ACCOUNT_CREATED,
+      event: AUDIT_LOG_EVENTS.USER_ACCOUNT_DELETED,
       userId: user.uid,
     });
-  });
+  } catch (error) {
+    throw error;
+  }
+});
 
-export const userDeletionListener = functions.auth
-  .user()
-  .onDelete(async (user) => {
-    try {
-      await deleteProfile(user.uid);
-
-      await deleteUserBucket(user.uid);
-
-      await createAuditLogEvent({
-        event: AUDIT_LOG_EVENTS.USER_ACCOUNT_DELETED,
-        userId: user.uid,
-      });
-    } catch (error) {
-      throw error;
-    }
-  });
-
-export const userProfileListener = functions.firestore
+export const onUserUpdate = functions.firestore
   .document(DATABASE_ADDRESSES.user)
-  .onWrite(async (change, context) => {
+  .onUpdate(async (change, context) => {
     try {
       // Get userId
       const { userId } = context.params;

@@ -171,18 +171,14 @@ export async function handleInvitationResponse(
   invite: Invite
 ): Promise<void> {
   try {
-    const rootAddress = DATABASE_ADDRESSES[invite.inviteTargetType].replace(
-      "{entityId}",
-      invite.inviteTargetId
-    );
-
-    const doc = await db.doc(rootAddress).get();
+    const doc = await invite.inviteTargetRef.get();
     if (!doc.exists) {
       console.log(
         `Entity refered in invite does not exist: ${JSON.stringify(invite)}`
       );
       await createOrUpdateInvite(inviteId, {
         ...invite,
+        inviteStatus: InviteStatus.EXPIRED,
         error: "invite-target-not-found",
       });
       return;
@@ -200,6 +196,7 @@ export async function handleInvitationResponse(
       );
       await createOrUpdateInvite(inviteId, {
         ...invite,
+        inviteStatus: InviteStatus.EXPIRED,
         error: "invite-not-valid",
       });
       return;
@@ -210,10 +207,16 @@ export async function handleInvitationResponse(
         ? UserRoleNumbers.MEMBER
         : UserRoleNumbers.REJECTED;
 
-    await doc.ref.update({
-      [`members.${invite.invitedUserIdentifier}`]: newRoleNumber,
-      [`members.${invite.invitedUserLiteral}`]: admin.firestore.FieldValue.delete(),
-    });
+    await doc.ref.set(
+      {
+        members: {
+          ...data.members,
+          [`${invite.invitedUserIdentifier}`]: newRoleNumber,
+          [`${invite.invitedUserLiteral}`]: admin.firestore.FieldValue.delete(),
+        },
+      },
+      { merge: true }
+    );
   } catch (error) {
     throw error;
   }

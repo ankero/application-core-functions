@@ -2,6 +2,7 @@ export enum InviteStatus {
   PENDING = "pending",
   REJECTED = "rejected",
   ACCEPTED = "accepted",
+  EXPIRED = "expired",
 }
 
 export enum InviteTargetType {
@@ -48,6 +49,7 @@ export interface Invite {
   inviteTargetId: string;
   inviteTargetType: InviteTargetType;
   inviteTargetPreview: InviteTargetPreview;
+  inviteTargetRef: any;
   invitedBy: string;
   invitedUserIdentifier: string;
   invitedUserIdentifierType: UserIdentifierType;

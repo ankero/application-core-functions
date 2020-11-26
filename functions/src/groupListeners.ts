@@ -10,37 +10,64 @@ import { deleteInvitesForEntity } from "./services/invites";
 import { Group, InviteTargetType } from "./interfaces";
 import { getPublicProfilesForMemberList } from "./services/entityMemberHandlers";
 
-export const groupListener = functions.firestore
-  .document(DATABASE_ADDRESSES.group)
-  .onWrite(async (change, context) => {
-    const { entityId } = context.params;
-    const group = change.after.exists ? (change.after.data() as Group) : null;
-    const prevGroup = change.before.exists
-      ? (change.before.data() as Group)
-      : null;
+async function handleGroupError(
+  entityId: string,
+  group: Group,
+  error: Error
+): Promise<void> {
+  console.error(`Unable to process group with groupId: ${entityId}`, error);
 
-    let hasChangesInMembers = false;
+  try {
+    await updateGroup(entityId, {
+      ...group,
+      processingError: error.toString(),
+    } as Group);
+  } catch (recordErrorError) {
+    console.error(
+      `Unable to record error to group document with groupId: ${entityId}`
+    );
+    throw recordErrorError;
+  }
+}
+
+export const onGroupCreate = functions.firestore
+  .document(DATABASE_ADDRESSES.group)
+  .onCreate(async (change, context) => {
+    const { entityId } = context.params;
+    const group = change.data() as Group;
 
     try {
-      if (!group) {
-        console.log("Group has been deleted, processing...");
-        await deleteInvitesForEntity(entityId, InviteTargetType.GROUP);
-      } else if (!prevGroup) {
-        console.log("New group has been created, processing...");
-        hasChangesInMembers = await handleNewGroupCreated(entityId, group);
-      } else if (group && prevGroup) {
-        console.log("Existing group has been updated, processing...");
-        hasChangesInMembers = await handleExistingGroupUpdated(
-          entityId,
-          group,
-          prevGroup
-        );
-      }
+      await handleNewGroupCreated(entityId, group, change.ref);
+      const formattedMemberList = await getPublicProfilesForMemberList(
+        group.members
+      );
+
+      await updateGroup(entityId, {
+        ...group,
+        formattedMemberList,
+      });
+    } catch (error) {
+      await handleGroupError(entityId, group, error);
+      throw error;
+    }
+  });
+
+export const onGroupUpdate = functions.firestore
+  .document(DATABASE_ADDRESSES.group)
+  .onUpdate(async (change, context) => {
+    const { entityId } = context.params;
+    const group = change.after.data() as Group;
+    const prevGroup = change.before.data() as Group;
+
+    try {
+      const hasChangesInMembers = await handleExistingGroupUpdated(
+        entityId,
+        group,
+        prevGroup,
+        change.after.ref
+      );
 
       if (group && hasChangesInMembers) {
-        console.log(
-          "Group member list has been updated, update public profiles to match."
-        );
         const formattedMemberList = await getPublicProfilesForMemberList(
           group.members
         );
@@ -51,19 +78,19 @@ export const groupListener = functions.firestore
         });
       }
     } catch (error) {
-      console.error(`Unable to process group with groupId: ${entityId}`, error);
+      await handleGroupError(entityId, group, error);
+      throw error;
+    }
+  });
 
-      try {
-        await updateGroup(entityId, {
-          ...group,
-          processingError: error.toString(),
-        } as Group);
-      } catch (recordErrorError) {
-        console.error(
-          `Unable to record error to group document with groupId: ${entityId}`
-        );
-        throw recordErrorError;
-      }
+export const onGroupDelete = functions.firestore
+  .document(DATABASE_ADDRESSES.group)
+  .onDelete(async (change, context) => {
+    const { entityId } = context.params;
+
+    try {
+      await deleteInvitesForEntity(entityId, InviteTargetType.GROUP);
+    } catch (error) {
       throw error;
     }
   });

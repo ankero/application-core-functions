@@ -18,3 +18,7 @@ export const validateNumber = (number: string): boolean => {
   const re = /[0-9-()]*[1-9][0-9-()]*/;
   return re.test(noSpaces);
 };
+
+export const escapeDotAddress = (value: string) => {
+  return value.replace(/\./g, "\\.");
+};

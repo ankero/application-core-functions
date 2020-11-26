@@ -52,7 +52,8 @@ export async function handleAddMultipleMembersToEntity(
   inviteTargetId: string,
   inviteTargetType: InviteTargetType,
   invitedBy: string,
-  inviteTargetPreview: InviteTargetPreview
+  inviteTargetPreview: InviteTargetPreview,
+  inviteTargetRef: any
 ): Promise<void> {
   try {
     const membersWhoNeedInvites = addedMembers.filter((newMember: any) => {
@@ -95,6 +96,7 @@ export async function handleAddMultipleMembersToEntity(
               inviteTargetType,
               inviteTargetId,
               inviteTargetPreview,
+              inviteTargetRef,
             })
           );
         }

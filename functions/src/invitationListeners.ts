@@ -4,18 +4,12 @@ import { DATABASE_ADDRESSES } from "./constants";
 import { handleInvitationResponse } from "./services/invites";
 import { Invite, InviteStatus } from "./interfaces";
 
-export const invitationListener = functions.firestore
+export const onInvitationUpdate = functions.firestore
   .document(DATABASE_ADDRESSES.invite)
   .onUpdate(async (change, context) => {
     const { inviteId } = context.params;
-    const invite = change.after.exists ? (change.after.data() as Invite) : null;
-    const prevInvite = change.before.exists
-      ? (change.before.data() as Invite)
-      : null;
-
-    if (!invite || !prevInvite) {
-      return;
-    }
+    const invite = change.after.data() as Invite;
+    const prevInvite = change.before.data() as Invite;
 
     try {
       const inviteStatusChange =

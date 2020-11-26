@@ -23,7 +23,8 @@ export async function updateGroup(groupId: string, data: Group): Promise<void> {
 
 export async function handleNewGroupCreated(
   groupId: string,
-  group: Group
+  group: Group,
+  groupRef: any
 ): Promise<boolean> {
   try {
     const membersForNewGroup = [] as Array<any>;
@@ -48,7 +49,8 @@ export async function handleNewGroupCreated(
       groupId,
       InviteTargetType.GROUP,
       group.createdBy,
-      inviteTargetPreview
+      inviteTargetPreview,
+      groupRef
     );
 
     return true;
@@ -60,7 +62,8 @@ export async function handleNewGroupCreated(
 export async function handleExistingGroupUpdated(
   groupId: string,
   group: Group,
-  prevGroup: Group
+  prevGroup: Group,
+  groupRef: any
 ): Promise<boolean> {
   try {
     // This is a old group, check for changes
@@ -102,7 +105,8 @@ export async function handleExistingGroupUpdated(
         groupId,
         InviteTargetType.GROUP,
         group.updatedBy || group.createdBy,
-        inviteTargetPreview
+        inviteTargetPreview,
+        groupRef
       );
     }
 
