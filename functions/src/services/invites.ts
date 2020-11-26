@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 import { DATABASE_ADDRESSES, DATABASE_COLLECTIONS } from "../constants";
-import { Invite, UserIdentifierType } from "../interfaces";
+import { Invite, User, UserIdentifierType } from "../interfaces";
 
 // database
 const db = admin.firestore();
@@ -117,6 +117,37 @@ export async function createOrUpdateInvite(
     await db
       .doc(DATABASE_ADDRESSES.invite.replace("{inviteId}", id))
       .set(invite, { merge: true });
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function claimInvitesForUser(user: User): Promise<void> {
+  try {
+    const identifier = user.email || user.phoneNumber;
+    const querySnapshot = await db
+      .collection(DATABASE_COLLECTIONS.invites)
+      .where("invitedUserIdentifier", "==", identifier)
+      .where("invitedUserIdentifierType", "!=", UserIdentifierType.USERID)
+      .get();
+
+    if (querySnapshot.empty) {
+      console.log(
+        `No invites found for new user with identifier: ${identifier}.`
+      );
+    } else {
+      const deletePromises = [] as Array<Promise<any>>;
+      querySnapshot.forEach((snapshot) =>
+        snapshot.ref.set(
+          {
+            invitedUserIdentifierType: UserIdentifierType.USERID,
+            invitedUserIdentifier: user.uid,
+          },
+          { merge: true }
+        )
+      );
+      await Promise.all(deletePromises);
+    }
   } catch (error) {
     throw error;
   }

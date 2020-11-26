@@ -8,8 +8,11 @@ import {
   createOrUpdateProfile,
   createOrUpdateProfilePublicData,
   deleteProfile,
+  getRandomName,
+  getRandomAvatar,
 } from "./services/user";
 import { deleteUserBucket } from "./services/storage";
+import { claimInvitesForUser } from "./services/invites";
 
 export const userCreationListener = functions.auth
   .user()
@@ -18,9 +21,12 @@ export const userCreationListener = functions.auth
       email: user.email,
       phoneNumber: user.phoneNumber,
       displayName: user.displayName,
+      publicName: getRandomName(),
+      publicPhotoUrl: getRandomAvatar(user.uid),
       photoURL: user.photoURL,
       createdAtMillis: Date.now(),
     });
+    await claimInvitesForUser(user);
     await createAuditLogEvent({
       event: AUDIT_LOG_EVENTS.USER_ACCOUNT_CREATED,
       userId: user.uid,

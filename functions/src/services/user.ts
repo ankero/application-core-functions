@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import { uniqueNamesGenerator, colors, animals } from "unique-names-generator";
 import { DATABASE_ADDRESSES, DATABASE_COLLECTIONS } from "../constants";
 import { isEmailOrNumber } from "./validators";
 import { PublicUserProfile, User, UserIdentifierType } from "../interfaces";
@@ -34,6 +35,9 @@ export async function createOrUpdateProfilePublicData(
 
 export async function deleteProfile(userId: string) {
   try {
+    await db
+      .doc(DATABASE_ADDRESSES.userPublicProfile.replace("{userId}", userId))
+      .delete();
     await db.doc(DATABASE_ADDRESSES.user.replace("{userId}", userId)).delete();
   } catch (error) {
     throw error;
@@ -138,4 +142,17 @@ export function buildUserPublicProfile(
     }
   });
   return publicProfile as PublicUserProfile;
+}
+
+export function getRandomName(): string {
+  return uniqueNamesGenerator({
+    dictionaries: [colors, animals],
+    separator: " ",
+    length: 2,
+    style: "lowerCase",
+  });
+}
+
+export function getRandomAvatar(seed: string | number | undefined): string {
+  return `https://avatars.dicebear.com/api/identicon/${seed || new Date()}.svg`;
 }

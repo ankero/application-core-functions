@@ -47,6 +47,7 @@ export interface Invite {
 }
 
 export interface User {
+  uid?: string;
   id?: string;
   email?: string;
   phoneNumber?: string;
