@@ -1,24 +1,31 @@
 import * as admin from "firebase-admin";
 import { DATABASE_ADDRESSES, DATABASE_COLLECTIONS } from "../constants";
-import { Invite, User, UserIdentifierType } from "../interfaces";
+import {
+  Invite,
+  InviteTargetType,
+  User,
+  UserIdentifierType,
+} from "../interfaces";
 
 // database
 const db = admin.firestore();
 
 export async function getInviteByInvitedUserIdentifier(
   invitedUserIdentifier: string,
-  invitedUserIdentifierType: UserIdentifierType
+  inviteTargetId: string,
+  inviteTargetType: InviteTargetType
 ): Promise<Invite | null> {
   try {
     const querySnapshot = await db
       .collection(DATABASE_COLLECTIONS.invites)
       .where("invitedUserIdentifier", "==", invitedUserIdentifier)
-      .where("invitedUserIdentifierType", "==", invitedUserIdentifierType)
+      .where("inviteTargetId", "==", inviteTargetId)
+      .where("inviteTargetType", "==", inviteTargetType)
       .get();
 
     if (querySnapshot.empty) {
       console.warn(
-        `Invite does not exist. invitedUserIdentifier:${invitedUserIdentifier}, invitedUserIdentifierType:${invitedUserIdentifierType}`
+        `Invite does not exist. invitedUserIdentifier:${invitedUserIdentifier}`
       );
       return null;
     }
@@ -34,7 +41,9 @@ export async function getInviteByInvitedUserIdentifier(
 
 export async function createInvite(invite: Invite): Promise<void> {
   try {
-    await db.collection(DATABASE_COLLECTIONS.invites).add(invite);
+    await db
+      .collection(DATABASE_COLLECTIONS.invites)
+      .add({ invite, updatedMillis: Date.now() });
   } catch (error) {
     throw error;
   }
@@ -104,7 +113,8 @@ export async function createOrUpdateInvite(
     if (!inviteId) {
       const existingInvite = await getInviteByInvitedUserIdentifier(
         invite.invitedUserIdentifier,
-        invite.invitedUserIdentifierType
+        invite.inviteTargetId,
+        invite.inviteTargetType
       );
 
       if (!existingInvite) {
@@ -116,7 +126,7 @@ export async function createOrUpdateInvite(
 
     await db
       .doc(DATABASE_ADDRESSES.invite.replace("{inviteId}", id))
-      .set(invite, { merge: true });
+      .set({ ...invite, updatedMillis: Date.now() }, { merge: true });
   } catch (error) {
     throw error;
   }
