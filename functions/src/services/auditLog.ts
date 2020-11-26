@@ -21,10 +21,10 @@ async function getLogEventConfiguration({
   }
 }
 
-function getLogAddress({ logAddress }: LogConfiguration, { userId }: any) {
+function getLogAddress({ logAddress }: LogConfiguration, { entityId }: any) {
   const logName = `log_${Date.now()}`;
   return logAddress
-    .replace("{userId}", userId || "")
+    .replace("{entityId}", entityId || "")
     .replace("{logId}", logName);
 }
 

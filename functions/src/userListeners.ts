@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 
-import { AUDIT_LOG_EVENTS, DATABASE_ADDRESSES } from "./constants";
+import { DATABASE } from "./constants";
 import { createAuditLogEvent } from "./services/auditLog";
 import { getApplicationUserConfiguration } from "./services/application";
 import {
@@ -13,6 +13,7 @@ import {
 } from "./services/user";
 import { deleteUserBucket } from "./services/storage";
 import { claimInvitesForUser } from "./services/invites";
+import { AuditLogEvents } from "./interfaces";
 
 export const onUserCreated = functions.auth.user().onCreate(async (user) => {
   await createOrUpdateProfile(user.uid, {
@@ -26,8 +27,8 @@ export const onUserCreated = functions.auth.user().onCreate(async (user) => {
   });
   await claimInvitesForUser(user);
   await createAuditLogEvent({
-    event: AUDIT_LOG_EVENTS.USER_ACCOUNT_CREATED,
-    userId: user.uid,
+    event: AuditLogEvents.USER_ACCOUNT_CREATED,
+    entityId: user.uid,
   });
 });
 
@@ -38,8 +39,8 @@ export const onUserDeleted = functions.auth.user().onDelete(async (user) => {
     await deleteUserBucket(user.uid);
 
     await createAuditLogEvent({
-      event: AUDIT_LOG_EVENTS.USER_ACCOUNT_DELETED,
-      userId: user.uid,
+      event: AuditLogEvents.USER_ACCOUNT_DELETED,
+      entityId: user.uid,
     });
   } catch (error) {
     throw error;
@@ -47,11 +48,11 @@ export const onUserDeleted = functions.auth.user().onDelete(async (user) => {
 });
 
 export const onUserUpdate = functions.firestore
-  .document(DATABASE_ADDRESSES.user)
+  .document(DATABASE.users.documents.user)
   .onUpdate(async (change, context) => {
     try {
       // Get userId
-      const { userId } = context.params;
+      const { entityId } = context.params;
 
       // Get document
       const document = change.after.exists ? change.after.data() : {};
@@ -62,18 +63,18 @@ export const onUserUpdate = functions.firestore
       // Set public profile based on profile settings
       if (profileSettings && profileSettings.userFields) {
         const publicProfile = buildUserPublicProfile(
-          { ...document, id: userId },
+          { ...document, id: entityId },
           profileSettings
         );
-        await createOrUpdateProfilePublicData(userId, publicProfile);
+        await createOrUpdateProfilePublicData(entityId, publicProfile);
       }
 
       // Set audit log record if this is not a new user as the new user
       // event is recorded with the user listener.
       if (change.before.exists) {
         await createAuditLogEvent({
-          event: AUDIT_LOG_EVENTS.USER_PROFILE_UPDATED,
-          userId,
+          event: AuditLogEvents.USER_PROFILE_UPDATED,
+          entityId,
         });
       }
     } catch (error) {

@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import { STORAGE_ADDRESSES } from "../constants";
+import { STORAGE } from "../constants";
 
 const bucket = admin.storage().bucket();
 
@@ -8,13 +8,13 @@ export async function deleteUserBucket(userId: string) {
     // Delete user public files
     await bucket.deleteFiles({
       force: true,
-      prefix: STORAGE_ADDRESSES.userPublicFiles.replace("{userId}", userId),
+      prefix: STORAGE.userPublicFiles.replace("{entityId}", userId),
     });
 
     // Delete user private files
     await bucket.deleteFiles({
       force: true,
-      prefix: STORAGE_ADDRESSES.userPrivateFiles.replace("{userId}", userId),
+      prefix: STORAGE.userPrivateFiles.replace("{entityId}", userId),
     });
     return true;
   } catch (error) {

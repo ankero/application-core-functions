@@ -31,6 +31,13 @@ export enum UserRoleNumbers {
   REJECTED = 99,
 }
 
+export enum AuditLogEvents {
+  USER_ACCOUNT_DELETED = "USER_ACCOUNT_DELETED",
+  USER_ACCOUNT_CREATED = "USER_ACCOUNT_CREATED",
+  USER_PROFILE_UPDATED = "USER_PROFILE_UPDATED",
+  USER_SIGNED_IN = "USER_SIGNED_IN",
+}
+
 export interface PublicUserProfile {
   id: string;
   publicName?: string;
@@ -82,8 +89,8 @@ export interface Group {
 }
 
 export interface AuditLog {
-  event: string;
-  userId?: string;
+  event: AuditLogEvents;
+  entityId?: string;
 }
 
 export interface LogConfiguration {
@@ -95,7 +102,7 @@ export interface ApplicationUserConfiguration {
   userFields: Array<ProfileItem>;
 }
 
-export interface ApplicationPrivateConfiguration {
+export interface ApplicationLoggedInAppConfiguration {
   backgroundColor: string;
 }
 

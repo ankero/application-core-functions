@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 
-import { DATABASE_ADDRESSES, DATABASE_COLLECTIONS } from "../constants";
+import { DATABASE } from "../constants";
 import {
   Invite,
   InviteStatus,
@@ -20,7 +20,7 @@ export async function getInviteByInvitedUserIdentifier(
 ): Promise<Invite | null> {
   try {
     const querySnapshot = await db
-      .collection(DATABASE_COLLECTIONS.invites)
+      .collection(DATABASE.invites.collectionName)
       .where("invitedUserIdentifier", "==", invitedUserIdentifier)
       .where("inviteTargetId", "==", inviteTargetId)
       .where("inviteTargetType", "==", inviteTargetType)
@@ -45,7 +45,7 @@ export async function getInviteByInvitedUserIdentifier(
 export async function createInvite(invite: Invite): Promise<void> {
   try {
     await db
-      .collection(DATABASE_COLLECTIONS.invites)
+      .collection(DATABASE.invites.collectionName)
       .add({ ...invite, updatedMillis: Date.now() });
   } catch (error) {
     throw error;
@@ -59,7 +59,7 @@ export async function deleteInviteForUserPerEntity(
 ): Promise<void> {
   try {
     const querySnapshot = await db
-      .collection(DATABASE_COLLECTIONS.invites)
+      .collection(DATABASE.invites.collectionName)
       .where("inviteTargetId", "==", inviteTargetId)
       .where("inviteTargetType", "==", inviteTargetType)
       .where("invitedUserLiteral", "==", invitedUserLiteral)
@@ -87,7 +87,7 @@ export async function deleteInvitesForEntity(
 ): Promise<void> {
   try {
     const querySnapshot = await db
-      .collection(DATABASE_COLLECTIONS.invites)
+      .collection(DATABASE.invites.collectionName)
       .where("inviteTargetId", "==", inviteTargetId)
       .where("inviteTargetType", "==", inviteTargetType)
       .get();
@@ -128,7 +128,7 @@ export async function createOrUpdateInvite(
     }
 
     await db
-      .doc(DATABASE_ADDRESSES.invite.replace("{inviteId}", id))
+      .doc(DATABASE.invites.documents.invite.replace("{entityId}", id))
       .set({ ...invite, updatedMillis: Date.now() }, { merge: true });
   } catch (error) {
     throw error;
@@ -139,7 +139,7 @@ export async function claimInvitesForUser(user: User): Promise<void> {
   try {
     const identifier = user.email || user.phoneNumber;
     const querySnapshot = await db
-      .collection(DATABASE_COLLECTIONS.invites)
+      .collection(DATABASE.invites.collectionName)
       .where("invitedUserIdentifier", "==", identifier)
       .where("invitedUserIdentifierType", "!=", UserIdentifierType.USERID)
       .get();

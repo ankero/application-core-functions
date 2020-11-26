@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 import { uniqueNamesGenerator, colors, animals } from "unique-names-generator";
-import { DATABASE_ADDRESSES, DATABASE_COLLECTIONS } from "../constants";
+import { DATABASE } from "../constants";
 import { isEmailOrNumber } from "./validators";
 import { PublicUserProfile, User, UserIdentifierType } from "../interfaces";
 
@@ -13,7 +13,7 @@ export async function createOrUpdateProfile(
 ): Promise<void> {
   try {
     await db
-      .doc(DATABASE_ADDRESSES.user.replace("{userId}", userId))
+      .doc(DATABASE.users.documents.user.replace("{entityId}", userId))
       .set(data, { merge: true });
   } catch (error) {
     throw error;
@@ -26,7 +26,9 @@ export async function createOrUpdateProfilePublicData(
 ): Promise<void> {
   try {
     await db
-      .doc(DATABASE_ADDRESSES.userPublicProfile.replace("{userId}", userId))
+      .doc(
+        DATABASE.users.documents.userPublicProfile.replace("{entityId}", userId)
+      )
       .set(data, { merge: true });
   } catch (error) {
     throw error;
@@ -36,9 +38,13 @@ export async function createOrUpdateProfilePublicData(
 export async function deleteProfile(userId: string) {
   try {
     await db
-      .doc(DATABASE_ADDRESSES.userPublicProfile.replace("{userId}", userId))
+      .doc(
+        DATABASE.users.documents.userPublicProfile.replace("{entityId}", userId)
+      )
       .delete();
-    await db.doc(DATABASE_ADDRESSES.user.replace("{userId}", userId)).delete();
+    await db
+      .doc(DATABASE.users.documents.user.replace("{entityId}", userId))
+      .delete();
   } catch (error) {
     throw error;
   }
@@ -49,7 +55,9 @@ export async function getUserPublicProfile(
 ): Promise<PublicUserProfile | null> {
   try {
     const doc = await db
-      .doc(DATABASE_ADDRESSES.userPublicProfile.replace("{userId}", userId))
+      .doc(
+        DATABASE.users.documents.userPublicProfile.replace("{entityId}", userId)
+      )
       .get();
     if (!doc.exists) {
       console.warn(`User public profile does not exist: ${userId}`);
@@ -67,7 +75,7 @@ export async function getUserPublicProfile(
 export async function getUserByEmail(email: string): Promise<User | any> {
   try {
     const querySnapshot = await db
-      .collection(DATABASE_COLLECTIONS.users)
+      .collection(DATABASE.users.collectionName)
       .where("email", "==", email)
       .get();
 
@@ -88,7 +96,7 @@ export async function getUserByEmail(email: string): Promise<User | any> {
 export async function getUserByNumber(number: string): Promise<User | null> {
   try {
     const querySnapshot = await db
-      .collection(DATABASE_COLLECTIONS.users)
+      .collection(DATABASE.users.collectionName)
       .where("phoneNumber", "==", number)
       .get();
 

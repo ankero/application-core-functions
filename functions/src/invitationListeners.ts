@@ -1,13 +1,13 @@
 import * as functions from "firebase-functions";
 
-import { DATABASE_ADDRESSES } from "./constants";
+import { DATABASE } from "./constants";
 import { handleInvitationResponse } from "./services/invites";
 import { Invite, InviteStatus } from "./interfaces";
 
 export const onInvitationUpdate = functions.firestore
-  .document(DATABASE_ADDRESSES.invite)
+  .document(DATABASE.invites.documents.invite)
   .onUpdate(async (change, context) => {
-    const { inviteId } = context.params;
+    const { entityId } = context.params;
     const invite = change.after.data() as Invite;
     const prevInvite = change.before.data() as Invite;
 
@@ -18,7 +18,7 @@ export const onInvitationUpdate = functions.firestore
       if (!inviteStatusChange || inviteIsPending) {
         return;
       }
-      await handleInvitationResponse(inviteId, invite);
+      await handleInvitationResponse(entityId, invite);
     } catch (error) {
       throw error;
     }

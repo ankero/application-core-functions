@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 
-import { AUDIT_LOG_EVENTS } from "./constants";
+import { AuditLogEvents } from "./interfaces";
 import { createAuditLogEvent } from "./services/auditLog";
 
 export const identifies = functions.https.onCall(async (data, context) => {
@@ -11,8 +11,8 @@ export const identifies = functions.https.onCall(async (data, context) => {
     }
 
     await createAuditLogEvent({
-      event: AUDIT_LOG_EVENTS.USER_SIGNED_IN,
-      userId: uid,
+      event: AuditLogEvents.USER_SIGNED_IN,
+      entityId: uid,
     });
   } catch (error) {
     throw error;

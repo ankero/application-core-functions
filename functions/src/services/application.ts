@@ -1,8 +1,8 @@
 import * as admin from "firebase-admin";
-import { DATABASE_ADDRESSES } from "../constants";
+import { DATABASE } from "../constants";
 import {
   ApplicationUserConfiguration,
-  ApplicationPrivateConfiguration,
+  ApplicationLoggedInAppConfiguration,
   ApplicationAuditLogConfiguration,
 } from "../interfaces";
 // database
@@ -13,7 +13,7 @@ const db = admin.firestore();
 export async function getApplicationUserConfiguration(): Promise<ApplicationUserConfiguration> {
   try {
     const doc = await db
-      .doc(DATABASE_ADDRESSES.applicationUserConfiguration)
+      .doc(DATABASE.application.documents.userConfiguration)
       .get();
     const empty = { userFields: [] };
     if (!doc.exists) {
@@ -26,17 +26,17 @@ export async function getApplicationUserConfiguration(): Promise<ApplicationUser
   }
 }
 
-export async function getApplicationPrivateConfiguration(): Promise<ApplicationPrivateConfiguration> {
+export async function getApplicationLoggedInAppConfiguration(): Promise<ApplicationLoggedInAppConfiguration> {
   try {
     const doc = await db
-      .doc(DATABASE_ADDRESSES.applicationPrivateConfiguration)
+      .doc(DATABASE.application.documents.loggedInAppConfiguration)
       .get();
     const empty = { backgroundColor: "" };
     if (!doc.exists) {
       console.warn("Document does not exist.");
       return empty;
     }
-    return (doc.data() as ApplicationPrivateConfiguration) || empty;
+    return (doc.data() as ApplicationLoggedInAppConfiguration) || empty;
   } catch (error) {
     throw Error(error);
   }
@@ -45,7 +45,7 @@ export async function getApplicationPrivateConfiguration(): Promise<ApplicationP
 export async function getApplicationAuditLogConfiguration(): Promise<ApplicationAuditLogConfiguration> {
   try {
     const doc = await db
-      .doc(DATABASE_ADDRESSES.applicationAuditLogConfiguration)
+      .doc(DATABASE.application.documents.auditLogConfiguration)
       .get();
     const empty = { auditLogEvents: [] };
     if (!doc.exists) {

@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import { DATABASE_ADDRESSES } from "../constants";
+import { DATABASE } from "../constants";
 import { Group, InviteTargetPreview, InviteTargetType } from "../interfaces";
 import {
   compareOldAndNewEntityMembers,
@@ -14,7 +14,7 @@ const db = admin.firestore();
 export async function updateGroup(groupId: string, data: Group): Promise<void> {
   try {
     await db
-      .doc(DATABASE_ADDRESSES.group.replace("{entityId}", groupId))
+      .doc(DATABASE.groups.documents.group.replace("{entityId}", groupId))
       .set({ ...data, processing: false }, { merge: true });
   } catch (error) {
     throw error;

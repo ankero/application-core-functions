@@ -1,24 +1,46 @@
-export const AUDIT_LOG_EVENTS = {
-  USER_ACCOUNT_DELETED: "USER_ACCOUNT_DELETED",
-  USER_ACCOUNT_CREATED: "USER_ACCOUNT_CREATED",
-  USER_PROFILE_UPDATED: "USER_PROFILE_UPDATED",
-  USER_SIGNED_IN: "USER_SIGNED_IN",
+export const STORAGE = {
+  userPublicFiles: "users/{entityId}/PUBLIC/",
+  userPrivateFiles: "users/{entityId}/PRIVATE/",
 };
-export const DATABASE_COLLECTIONS = {
-  users: "users",
-  groups: "groups",
-  invites: "invites",
-};
-export const DATABASE_ADDRESSES = {
-  applicationUserConfiguration: "/application/USER_CONFIGURATION",
-  applicationPrivateConfiguration: "/application/PRIVATE_CONFIGURATION",
-  applicationAuditLogConfiguration: "/application/AUDIT_LOG",
-  user: "/users/{userId}",
-  userPublicProfile: "/users/{userId}/PUBLIC_PROFILE/profile",
-  group: "/groups/{entityId}",
-  invite: "/invites/{inviteId}",
-};
-export const STORAGE_ADDRESSES = {
-  userPublicFiles: "users/{userId}/PUBLIC/",
-  userPrivateFiles: "users/{userId}/PRIVATE/",
+export const DATABASE = {
+  application: {
+    collectionName: "application",
+    documents: {
+      publicAppConfiguration: "/application/publicAppConfiguration",
+      userConfiguration: "/application/userConfiguration",
+      loggedInAppConfiguration: "/application/loggedInAppConfiguration",
+      auditLogConfiguration: "/application/auditLogConfiguration",
+    },
+  },
+  auditLog: {
+    collectionName: "auditLog",
+    documents: {
+      log: "/auditLog/{logId}",
+    },
+  },
+  users: {
+    collectionName: "users",
+    documents: {
+      user: "/users/{entityId}",
+      userPublicProfile: "/users/{entityId}/publicProfile/profile",
+      userAuditLogs: "/users/{entityId}/publicProfile/{logId}",
+    },
+    collections: {
+      userAuditLogs: {
+        collectionName: "/users/{entityId}/auditLog",
+      },
+    },
+  },
+  groups: {
+    collectionName: "groups",
+    documents: {
+      group: "/groups/{entityId}",
+    },
+  },
+  invites: {
+    collectionName: "invites",
+    documents: {
+      invite: "/invites/{entityId}",
+    },
+  },
 };

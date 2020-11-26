@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 
-import { DATABASE_ADDRESSES } from "./constants";
+import { DATABASE } from "./constants";
 import {
   handleExistingGroupUpdated,
   handleNewGroupCreated,
@@ -31,7 +31,7 @@ async function handleGroupError(
 }
 
 export const onGroupCreate = functions.firestore
-  .document(DATABASE_ADDRESSES.group)
+  .document(DATABASE.groups.documents.group)
   .onCreate(async (change, context) => {
     const { entityId } = context.params;
     const group = change.data() as Group;
@@ -53,7 +53,7 @@ export const onGroupCreate = functions.firestore
   });
 
 export const onGroupUpdate = functions.firestore
-  .document(DATABASE_ADDRESSES.group)
+  .document(DATABASE.groups.documents.group)
   .onUpdate(async (change, context) => {
     const { entityId } = context.params;
     const group = change.after.data() as Group;
@@ -84,7 +84,7 @@ export const onGroupUpdate = functions.firestore
   });
 
 export const onGroupDelete = functions.firestore
-  .document(DATABASE_ADDRESSES.group)
+  .document(DATABASE.groups.documents.group)
   .onDelete(async (change, context) => {
     const { entityId } = context.params;
 
