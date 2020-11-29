@@ -21,6 +21,44 @@ export async function updateGroup(groupId: string, data: Group): Promise<void> {
   }
 }
 
+export async function getGroupById(groupId: string): Promise<Group | null> {
+  try {
+    const group = await db
+      .doc(DATABASE.groups.documents.group.replace("{entityId}", groupId))
+      .get();
+
+    if (!group.exists) {
+      return null;
+    }
+
+    return {
+      ...group.data(),
+      id: groupId,
+    } as Group;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function removeGroupMember(
+  groupId: string,
+  group: Group,
+  memberId: string
+): Promise<void> {
+  try {
+    const newMemberObject = {
+      ...group.members,
+      [memberId]: admin.firestore.FieldValue.delete(),
+    };
+
+    await db
+      .doc(DATABASE.groups.documents.group.replace("{entityId}", groupId))
+      .set({ members: newMemberObject }, { merge: true });
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function handleNewGroupCreated(
   groupId: string,
   group: Group,

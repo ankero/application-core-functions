@@ -2,12 +2,14 @@ import * as functions from "firebase-functions";
 
 import { DATABASE } from "./constants";
 import {
+  getGroupById,
   handleExistingGroupUpdated,
   handleNewGroupCreated,
+  removeGroupMember,
   updateGroup,
 } from "./services/group";
 import { deleteInvitesForEntity } from "./services/invites";
-import { Group, InviteTargetType } from "./interfaces";
+import { Group, InviteTargetType, UserRoleNumbers } from "./interfaces";
 import { getPublicProfilesForMemberList } from "./services/entityMemberHandlers";
 
 async function handleGroupError(
@@ -94,3 +96,41 @@ export const onGroupDelete = functions.firestore
       throw error;
     }
   });
+
+export const leaveGroup = functions.https.onCall(async (data, context) => {
+  try {
+    const { uid } = context.auth || ({} as any);
+
+    if (!uid) {
+      throw new Error("UNAUTHORIZED");
+    }
+
+    const { groupId } = data;
+
+    if (!groupId) {
+      throw new Error("GROUP ID MISSING");
+    }
+
+    const group = await getGroupById(groupId);
+
+    if (!group) {
+      throw new Error("Not found");
+    }
+
+    const userRole = group.members[uid];
+
+    if (!userRole) {
+      throw new Error("Not found");
+    }
+
+    if (userRole === UserRoleNumbers.OWNER) {
+      throw new Error("Owners cannot remove self");
+    }
+
+    await removeGroupMember(groupId, group, uid);
+
+    return { success: true };
+  } catch (error) {
+    throw error;
+  }
+});

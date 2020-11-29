@@ -78,11 +78,12 @@ export interface User {
 }
 
 export interface Group {
+  id?: string;
   name: string;
   description?: string;
   createdBy: string;
   updatedBy?: string;
-  members: Array<string>;
+  members: Array<any>;
   formattedMemberList: Array<User>;
   processingError?: string | null;
 }

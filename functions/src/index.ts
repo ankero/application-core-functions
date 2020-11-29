@@ -4,10 +4,15 @@ import * as admin from "firebase-admin";
 // otherwise functions will complain about having multiple or no firebase admin
 admin.initializeApp();
 
-import { onUserCreated, onUserDeleted, onUserUpdate } from "./userListeners";
-import { onGroupCreate, onGroupDelete, onGroupUpdate } from "./groupListeners";
+import { onUserCreated, onUserDeleted, onUserUpdate } from "./users";
+import {
+  onGroupCreate,
+  onGroupDelete,
+  onGroupUpdate,
+  leaveGroup,
+} from "./groups";
 import { identifies } from "./analytics";
-import { onInvitationUpdate } from "./invitationListeners";
+import { onInvitationUpdate } from "./invitations";
 
 export {
   identifies,
@@ -17,5 +22,6 @@ export {
   onGroupCreate,
   onGroupDelete,
   onGroupUpdate,
+  leaveGroup,
   onInvitationUpdate,
 };

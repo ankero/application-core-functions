@@ -1,3 +1,9 @@
+/*
+ * INSTRUCTIONS ON STORAGE & DATABASE
+ * When referencing new indexes, please use the same type of structure as below.
+ * This helps to keep the same type of approach and minimise any silly mistakes.
+ */
+
 export const STORAGE = {
   userPublicFiles: "users/{entityId}/PUBLIC/",
   userPrivateFiles: "users/{entityId}/PRIVATE/",
