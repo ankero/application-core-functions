@@ -4,6 +4,7 @@ import { DATABASE } from "../constants";
 import { isEmailOrNumber } from "./validators";
 import { PublicUserProfile, User, UserIdentifierType } from "../interfaces";
 import { deleteCollection } from "./collection";
+import { saveJSONToStorage } from "./storage";
 
 // database
 const db = admin.firestore();
@@ -52,6 +53,26 @@ export async function deleteProfile(userId: string) {
     await db
       .doc(DATABASE.users.documents.user.replace("{entityId}", userId))
       .delete();
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function getUser(
+  userId: string
+): Promise<PublicUserProfile | null> {
+  try {
+    const doc = await db
+      .doc(DATABASE.users.documents.user.replace("{entityId}", userId))
+      .get();
+    if (!doc.exists) {
+      console.warn(`User public profile does not exist: ${userId}`);
+      return null;
+    }
+    return {
+      ...doc.data(),
+      id: userId,
+    } as PublicUserProfile;
   } catch (error) {
     throw error;
   }
@@ -157,6 +178,26 @@ export function buildUserPublicProfile(
     }
   });
   return publicProfile as PublicUserProfile;
+}
+
+export async function gatherAllUserDataToCSV(userId: string): Promise<any> {
+  try {
+    const reportId = `data_export_${Date.now()}`;
+
+    // Add more data here
+    // For example links to all images and other entities created by the user
+    const profile = await getUser(userId);
+
+    const response = await saveJSONToStorage(
+      `users/${userId}/PRIVATE/`,
+      `${reportId}.csv`,
+      profile
+    );
+
+    return response;
+  } catch (error) {
+    throw error;
+  }
 }
 
 export function getRandomName(): string {

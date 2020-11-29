@@ -9,6 +9,7 @@ import {
   onUserDeleted,
   onUserUpdated,
   acceptPrivacyPolicy,
+  downloadMyData,
 } from "./users";
 import {
   onGroupCreate,
@@ -25,6 +26,7 @@ export {
   onUserCreated,
   onUserDeleted,
   acceptPrivacyPolicy,
+  downloadMyData,
   onGroupCreate,
   onGroupDelete,
   onGroupUpdate,

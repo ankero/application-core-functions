@@ -10,6 +10,7 @@ import {
   deleteProfile,
   getRandomName,
   getRandomAvatar,
+  gatherAllUserDataToCSV,
 } from "./services/user";
 import { deleteUserBucket } from "./services/storage";
 import { claimInvitesForUser } from "./services/invites";
@@ -49,6 +50,17 @@ export const onUserDeleted = functions.auth.user().onDelete(async (user) => {
     await deleteProfile(user.uid);
 
     await deleteUserBucket(user.uid);
+
+    // Get user profile settings
+    const profileSettings = await getApplicationUserConfiguration();
+
+    if (profileSettings) {
+      await updateObjectReferences(
+        user.uid,
+        { deleted: true },
+        profileSettings.publicProfileLinks
+      );
+    }
 
     await createAuditLogEvent({
       event: AuditLogEvents.USER_ACCOUNT_DELETED,
@@ -125,3 +137,23 @@ export const acceptPrivacyPolicy = functions.https.onCall(
     }
   }
 );
+
+export const downloadMyData = functions.https.onCall(async (data, context) => {
+  try {
+    const { uid } = context.auth || {};
+    if (!uid) {
+      throw new Error("UNAUTHORIZED");
+    }
+
+    const result = await gatherAllUserDataToCSV(uid);
+
+    await createAuditLogEvent({
+      event: AuditLogEvents.USER_REQUESTED_DATA_DOWNLOAD,
+      entityId: uid,
+    });
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+});
