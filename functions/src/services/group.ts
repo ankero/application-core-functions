@@ -78,8 +78,6 @@ export async function handleNewGroupCreated(
 
     const inviteTargetPreview = {
       name: group.name,
-      inviterPublicName: inviter?.publicName || "Unnamed",
-      inviterPublicPhotoUrl: inviter?.publicPhotoUrl,
     } as InviteTargetPreview;
 
     await handleAddMultipleMembersToEntity(
@@ -88,6 +86,7 @@ export async function handleNewGroupCreated(
       InviteTargetType.GROUP,
       group.createdBy,
       inviteTargetPreview,
+      inviter,
       groupRef
     );
 
@@ -134,8 +133,6 @@ export async function handleExistingGroupUpdated(
 
       const inviteTargetPreview = {
         name: group.name,
-        inviterPublicName: inviter?.publicName || "Unnamed",
-        inviterPublicPhotoUrl: inviter?.publicPhotoUrl,
       } as InviteTargetPreview;
 
       await handleAddMultipleMembersToEntity(
@@ -144,6 +141,7 @@ export async function handleExistingGroupUpdated(
         InviteTargetType.GROUP,
         group.updatedBy || group.createdBy,
         inviteTargetPreview,
+        inviter,
         groupRef
       );
     }

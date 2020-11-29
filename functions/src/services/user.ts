@@ -157,7 +157,7 @@ export function getRandomName(): string {
     dictionaries: [colors, animals],
     separator: " ",
     length: 2,
-    style: "lowerCase",
+    style: "capital",
   });
 }
 

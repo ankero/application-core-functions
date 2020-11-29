@@ -46,8 +46,8 @@ export interface PublicUserProfile {
 
 export interface InviteTargetPreview {
   name: string;
-  inviterPublicName: string;
-  inviterPublicPhotoUrl?: string;
+  description?: string;
+  photoUrl?: string;
 }
 
 export interface Invite {
@@ -57,6 +57,7 @@ export interface Invite {
   inviteTargetPreview: InviteTargetPreview;
   inviteTargetRef: any;
   invitedBy: string;
+  inviterProfile: User | null;
   invitedUserIdentifier: string;
   invitedUserIdentifierType: UserIdentifierType;
   invitedUserLiteral: string;
@@ -98,8 +99,17 @@ export interface LogConfiguration {
   logAddress: string;
 }
 
+export interface ReferenceMap {
+  collection: string;
+  source: Array<string>;
+  targetKey: string;
+}
+
 export interface ApplicationUserConfiguration {
+  generateRandomNameOnCreate?: Boolean;
+  generateRandomAvatarOnCreate?: Boolean;
   userFields: Array<ProfileItem>;
+  publicProfileLinks: Array<ReferenceMap>;
 }
 
 export interface ApplicationLoggedInAppConfiguration {

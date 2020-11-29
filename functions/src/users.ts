@@ -14,14 +14,26 @@ import {
 import { deleteUserBucket } from "./services/storage";
 import { claimInvitesForUser } from "./services/invites";
 import { AuditLogEvents } from "./interfaces";
+import { updateObjectReferences } from "./services/references";
 
 export const onUserCreated = functions.auth.user().onCreate(async (user) => {
+  const userSettings = await getApplicationUserConfiguration();
+
+  // Define wether to generate random name & avatar
+  // If false and not found, then still generate
+  const publicName = userSettings.generateRandomNameOnCreate
+    ? getRandomName()
+    : user.displayName || getRandomName();
+  const publicPhotoUrl = userSettings.generateRandomAvatarOnCreate
+    ? getRandomAvatar(user.uid)
+    : user.photoURL || getRandomAvatar(user.uid);
+
   await createOrUpdateProfile(user.uid, {
     email: user.email,
     phoneNumber: user.phoneNumber,
     displayName: user.displayName,
-    publicName: getRandomName(),
-    publicPhotoUrl: getRandomAvatar(user.uid),
+    publicName,
+    publicPhotoUrl,
     photoURL: user.photoURL,
     createdAtMillis: Date.now(),
   });
@@ -71,6 +83,11 @@ export const onUserUpdate = functions.firestore
           profileSettings
         );
         await createOrUpdateProfilePublicData(entityId, publicProfile);
+        await updateObjectReferences(
+          entityId,
+          publicProfile,
+          profileSettings.publicProfileLinks
+        );
       }
 
       // Set audit log record if this is not a new user as the new user

@@ -7,6 +7,7 @@ import {
   UserRoleNumbers,
   OldAndNewEntityMemberComparison,
   InviteTargetPreview,
+  User,
 } from "../interfaces";
 import {
   createOrUpdateInvite,
@@ -44,6 +45,7 @@ export async function handleAddMultipleMembersToEntity(
   inviteTargetType: InviteTargetType,
   invitedBy: string,
   inviteTargetPreview: InviteTargetPreview,
+  inviterProfile: User | null,
   inviteTargetRef: any
 ): Promise<void> {
   try {
@@ -84,6 +86,7 @@ export async function handleAddMultipleMembersToEntity(
               inviteTargetType,
               inviteTargetId,
               inviteTargetPreview,
+              inviterProfile,
               inviteTargetRef,
             })
           );

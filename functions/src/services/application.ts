@@ -15,7 +15,7 @@ export async function getApplicationUserConfiguration(): Promise<ApplicationUser
     const doc = await db
       .doc(DATABASE.application.documents.userConfiguration)
       .get();
-    const empty = { userFields: [] };
+    const empty = { userFields: [], publicProfileLinks: [] };
     if (!doc.exists) {
       console.warn("Document does not exist.");
       return empty;
