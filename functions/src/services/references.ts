@@ -21,7 +21,7 @@ export async function updateObjectReferences(
       return;
     }
 
-    const setPromises = [] as Array<Promise<any>>;
+    const batch = db.batch();
 
     for (const conf of referenceMap) {
       const whereQuery = populateEntityId(entityId, conf.source[0]) as string;
@@ -53,13 +53,15 @@ export async function updateObjectReferences(
           };
         }
 
-        setPromises.push(
-          doc.ref.set({ [conf.targetKey]: newReferences }, { merge: true })
+        batch.set(
+          doc.ref,
+          { [conf.targetKey]: newReferences },
+          { merge: true }
         );
       });
     }
 
-    await Promise.all(setPromises);
+    await batch.commit();
   } catch (error) {
     throw error;
   }

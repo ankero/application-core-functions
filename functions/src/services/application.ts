@@ -47,7 +47,7 @@ export async function getApplicationAuditLogConfiguration(): Promise<Application
     const doc = await db
       .doc(DATABASE.application.documents.auditLogConfiguration)
       .get();
-    const empty = { auditLogEvents: [] };
+    const empty = { auditLogEvents: [], gatherAuditLog: false };
     if (!doc.exists) {
       console.warn("Document does not exist.");
       return empty;

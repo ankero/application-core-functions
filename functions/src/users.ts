@@ -59,7 +59,7 @@ export const onUserDeleted = functions.auth.user().onDelete(async (user) => {
   }
 });
 
-export const onUserUpdate = functions.firestore
+export const onUserUpdated = functions.firestore
   .document(DATABASE.users.documents.user)
   .onWrite(async (change, context) => {
     try {
@@ -102,3 +102,26 @@ export const onUserUpdate = functions.firestore
       throw Error(error);
     }
   });
+
+export const acceptPrivacyPolicy = functions.https.onCall(
+  async (data, context) => {
+    try {
+      const { uid } = context.auth || {};
+      if (!uid) {
+        throw new Error("UNAUTHORIZED");
+      }
+
+      await createOrUpdateProfile(uid, {
+        privacyPolicyAccepted: true,
+        privacyPolicyAcceptedMillis: Date.now(),
+      });
+
+      await createAuditLogEvent({
+        event: AuditLogEvents.USER_APPROVED_PRIVACY_POLICY,
+        entityId: uid,
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+);

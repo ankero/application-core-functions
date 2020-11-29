@@ -3,13 +3,14 @@ import { uniqueNamesGenerator, colors, animals } from "unique-names-generator";
 import { DATABASE } from "../constants";
 import { isEmailOrNumber } from "./validators";
 import { PublicUserProfile, User, UserIdentifierType } from "../interfaces";
+import { deleteCollection } from "./collection";
 
 // database
 const db = admin.firestore();
 
 export async function createOrUpdateProfile(
   userId: string,
-  data: User
+  data: User | any
 ): Promise<void> {
   try {
     await db
@@ -42,6 +43,12 @@ export async function deleteProfile(userId: string) {
         DATABASE.users.documents.userPublicProfile.replace("{entityId}", userId)
       )
       .delete();
+    await deleteCollection(
+      DATABASE.users.collections.userAuditLogs.collectionName.replace(
+        "{entityId}",
+        userId
+      )
+    );
     await db
       .doc(DATABASE.users.documents.user.replace("{entityId}", userId))
       .delete();

@@ -4,7 +4,12 @@ import * as admin from "firebase-admin";
 // otherwise functions will complain about having multiple or no firebase admin
 admin.initializeApp();
 
-import { onUserCreated, onUserDeleted, onUserUpdate } from "./users";
+import {
+  onUserCreated,
+  onUserDeleted,
+  onUserUpdated,
+  acceptPrivacyPolicy,
+} from "./users";
 import {
   onGroupCreate,
   onGroupDelete,
@@ -16,9 +21,10 @@ import { onInvitationUpdate } from "./invitations";
 
 export {
   identifies,
-  onUserUpdate,
+  onUserUpdated,
   onUserCreated,
   onUserDeleted,
+  acceptPrivacyPolicy,
   onGroupCreate,
   onGroupDelete,
   onGroupUpdate,

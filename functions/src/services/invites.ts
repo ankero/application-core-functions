@@ -70,13 +70,13 @@ export async function deleteUnusedInviteForUserPerEntity(
         `No invite for user: ${invitedUserLiteral} with invite details: inviteTargetId:${inviteTargetId}, inviteTargetType:${inviteTargetType}`
       );
     } else {
-      const deletePromises = [] as Array<Promise<any>>;
+      const batch = db.batch();
       querySnapshot.forEach((snapshot) => {
         if (snapshot.data().inviteStatus === InviteStatus.PENDING) {
-          deletePromises.push(snapshot.ref.delete());
+          batch.delete(snapshot.ref);
         }
       });
-      await Promise.all(deletePromises);
+      await batch.commit();
     }
   } catch (error) {
     throw error;
@@ -98,11 +98,9 @@ export async function deleteInvitesForEntity(
         `No invites found for deletion. inviteTargetId:${inviteTargetId}, inviteTargetType:${inviteTargetType}`
       );
     } else {
-      const deletePromises = [] as Array<Promise<any>>;
-      querySnapshot.forEach((snapshot) =>
-        deletePromises.push(snapshot.ref.delete())
-      );
-      await Promise.all(deletePromises);
+      const batch = db.batch();
+      querySnapshot.forEach((snapshot) => batch.delete(snapshot.ref));
+      await batch.commit();
     }
   } catch (error) {
     throw error;
@@ -151,17 +149,18 @@ export async function claimInvitesForUser(user: User): Promise<void> {
         `No invites found for new user with identifier: ${identifier}.`
       );
     } else {
-      const deletePromises = [] as Array<Promise<any>>;
-      querySnapshot.forEach((snapshot) =>
-        snapshot.ref.set(
+      const batch = db.batch();
+      querySnapshot.forEach((snapshot) => {
+        batch.set(
+          snapshot.ref,
           {
             invitedUserIdentifierType: UserIdentifierType.USERID,
             invitedUserIdentifier: user.uid,
           },
           { merge: true }
-        )
-      );
-      await Promise.all(deletePromises);
+        );
+      });
+      await batch.commit();
     }
   } catch (error) {
     throw error;
