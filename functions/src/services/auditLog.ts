@@ -10,10 +10,10 @@ async function getLogEventConfiguration({
 }: any): Promise<LogConfiguration | null> {
   try {
     const auditLogConfiguration = await getApplicationAuditLogConfiguration();
-    const logConfiguration = auditLogConfiguration.auditLogEvents;
-    if (!logConfiguration) return null;
+    const { auditLogEvents, gatherAuditLog } = auditLogConfiguration;
+    if (!auditLogEvents || !gatherAuditLog) return null;
 
-    return logConfiguration.find(
+    return auditLogEvents.find(
       (conf) => conf.event === event
     ) as LogConfiguration;
   } catch (error) {
@@ -34,7 +34,7 @@ export async function createAuditLogEvent(data: AuditLog): Promise<void> {
 
     if (!eventConfiguration) {
       console.log(
-        `Logs not enabled for event ${data.event}. If this is not intended, please add configuration to /application/AUDIT_LOG/auditLogEvents<Array>{event, label, logAddress}`
+        `Logs not enabled or not on for the event ${data.event}. If this is not intended, please check configuration in /application/auditLogConfiguration`
       );
       return;
     }

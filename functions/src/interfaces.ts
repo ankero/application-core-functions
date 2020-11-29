@@ -118,6 +118,7 @@ export interface ApplicationLoggedInAppConfiguration {
 
 export interface ApplicationAuditLogConfiguration {
   auditLogEvents: Array<LogConfiguration>;
+  gatherAuditLog: Boolean;
 }
 
 export interface ProfileItem {
