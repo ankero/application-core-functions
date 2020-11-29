@@ -28,18 +28,13 @@ export async function updateObjectReferences(
       const comparator = conf.source[1] as any;
       const filterBy = populateEntityId(entityId, conf.source[2]);
 
-      console.log(`CONF: ${whereQuery}, ${comparator}, ${filterBy}`);
-
       const snapshots = await db
         .collection(conf.collection)
         .where(whereQuery, comparator, filterBy)
         .get();
 
-      console.log(`Snapshot count: ${snapshots.docs.length}`);
-
       snapshots.forEach((doc) => {
         const references = doc.data()[conf.targetKey];
-        console.log(`references: ${references}`);
         let newReferences;
         if (Array.isArray(references)) {
           newReferences = references.map((item: any) => {
@@ -52,7 +47,6 @@ export async function updateObjectReferences(
             };
           });
         } else {
-          console.log("Handling as an object");
           newReferences = {
             ...references,
             ...data,
@@ -64,7 +58,7 @@ export async function updateObjectReferences(
         );
       });
     }
-    console.log("DO PROMISES");
+
     await Promise.all(setPromises);
   } catch (error) {
     throw error;
