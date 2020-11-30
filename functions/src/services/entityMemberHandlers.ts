@@ -1,12 +1,12 @@
 import {
   InviteStatus,
-  InviteTargetType,
+  EntityType,
   UserIdentifierType,
   PublicUserProfile,
   UserRoleType,
   UserRoleNumbers,
   OldAndNewEntityMemberComparison,
-  InviteTargetPreview,
+  EntityPreview,
   User,
 } from "../interfaces";
 import {
@@ -18,7 +18,7 @@ import { getUserPublicProfile, getUsersBasedOnEmailOrNumber } from "./user";
 export async function handleRemoveMultipleMembersFromEntity(
   removedMembers: Array<any>,
   inviteTargetId: string,
-  inviteTargetType: InviteTargetType
+  inviteTargetType: EntityType
 ): Promise<void> {
   try {
     const deleteInvitesPromises = [] as Array<any>;
@@ -42,9 +42,9 @@ export async function handleRemoveMultipleMembersFromEntity(
 export async function handleAddMultipleMembersToEntity(
   addedMembers: Array<any>,
   inviteTargetId: string,
-  inviteTargetType: InviteTargetType,
+  inviteTargetType: EntityType,
   invitedBy: string,
-  inviteTargetPreview: InviteTargetPreview,
+  inviteTargetPreview: EntityPreview,
   inviterProfile: User | null,
   inviteTargetRef: any
 ): Promise<void> {

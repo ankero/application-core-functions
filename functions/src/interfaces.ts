@@ -5,8 +5,14 @@ export enum InviteStatus {
   EXPIRED = "expired",
 }
 
-export enum InviteTargetType {
+export enum EntityType {
   GROUP = "group",
+}
+
+export enum NotificationEventType {
+  GROUP_INVITE_ACCEPTED = "GROUP_INVITE_ACCEPTED",
+  GROUP_INVITE_REJECTED = "GROUP_INVITE_REJECTED",
+  USER_DATA_EXPORT_READY = "USER_DATA_EXPORT_READY",
 }
 
 export enum UserIdentifierType {
@@ -46,7 +52,7 @@ export interface PublicUserProfile {
   role?: UserRoleType | null;
 }
 
-export interface InviteTargetPreview {
+export interface EntityPreview {
   name: string;
   description?: string;
   photoUrl?: string;
@@ -55,8 +61,8 @@ export interface InviteTargetPreview {
 export interface Invite {
   id?: string;
   inviteTargetId: string;
-  inviteTargetType: InviteTargetType;
-  inviteTargetPreview: InviteTargetPreview;
+  inviteTargetType: EntityType;
+  inviteTargetPreview: EntityPreview;
   inviteTargetRef: any;
   invitedBy: string;
   inviterProfile: User | null;
@@ -131,4 +137,22 @@ export interface ProfileItem {
 export interface OldAndNewEntityMemberComparison {
   removedMembers: Array<any>;
   addedMembers: Array<any>;
+}
+
+export interface Notification {
+  id?: string;
+  userId: string;
+  read?: boolean;
+  seen?: boolean;
+  referenceUserProfiles?: Array<PublicUserProfile>;
+  referenceUserIds: Array<string>;
+  referenceEntityId: string;
+  referenceEntityType: EntityType;
+  referenceEntityRef: any;
+  referenceEntityUri?: string;
+  referenceEntityPreview: EntityPreview;
+  eventType: NotificationEventType;
+  createdMillis?: number;
+  readMillis?: number;
+  seenMillis?: number;
 }

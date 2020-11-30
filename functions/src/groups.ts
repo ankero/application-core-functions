@@ -9,7 +9,7 @@ import {
   updateGroup,
 } from "./services/group";
 import { deleteInvitesForEntity } from "./services/invites";
-import { Group, InviteTargetType, UserRoleNumbers } from "./interfaces";
+import { Group, EntityType, UserRoleNumbers } from "./interfaces";
 import { getPublicProfilesForMemberList } from "./services/entityMemberHandlers";
 
 async function handleGroupError(
@@ -91,7 +91,7 @@ export const onGroupDelete = functions.firestore
     const { entityId } = context.params;
 
     try {
-      await deleteInvitesForEntity(entityId, InviteTargetType.GROUP);
+      await deleteInvitesForEntity(entityId, EntityType.GROUP);
     } catch (error) {
       throw error;
     }

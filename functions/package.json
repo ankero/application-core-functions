@@ -15,10 +15,12 @@
   "main": "lib/index.js",
   "dependencies": {
     "@types/json2csv": "^5.0.1",
+    "@types/lodash.isequal": "^4.5.5",
     "firebase-admin": "^9.4.1",
     "firebase-functions": "^3.11.0",
     "fs-extra": "^9.0.1",
     "json2csv": "^5.0.5",
+    "lodash.isequal": "^4.5.0",
     "os": "^0.1.1",
     "path": "^0.12.7",
     "unique-names-generator": "^4.3.1"

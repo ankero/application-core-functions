@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 import { DATABASE } from "../constants";
-import { Group, InviteTargetPreview, InviteTargetType } from "../interfaces";
+import { Group, EntityPreview, EntityType } from "../interfaces";
 import {
   compareOldAndNewEntityMembers,
   handleAddMultipleMembersToEntity,
@@ -78,12 +78,12 @@ export async function handleNewGroupCreated(
 
     const inviteTargetPreview = {
       name: group.name,
-    } as InviteTargetPreview;
+    } as EntityPreview;
 
     await handleAddMultipleMembersToEntity(
       membersForNewGroup,
       groupId,
-      InviteTargetType.GROUP,
+      EntityType.GROUP,
       group.createdBy,
       inviteTargetPreview,
       inviter,
@@ -121,7 +121,7 @@ export async function handleExistingGroupUpdated(
       await handleRemoveMultipleMembersFromEntity(
         removedMembers,
         groupId,
-        InviteTargetType.GROUP
+        EntityType.GROUP
       );
     }
 
@@ -133,12 +133,12 @@ export async function handleExistingGroupUpdated(
 
       const inviteTargetPreview = {
         name: group.name,
-      } as InviteTargetPreview;
+      } as EntityPreview;
 
       await handleAddMultipleMembersToEntity(
         addedMembers,
         groupId,
-        InviteTargetType.GROUP,
+        EntityType.GROUP,
         group.updatedBy || group.createdBy,
         inviteTargetPreview,
         inviter,

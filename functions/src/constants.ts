@@ -49,4 +49,10 @@ export const DATABASE = {
       invite: "/invites/{entityId}",
     },
   },
+  notifications: {
+    collectionName: "notifications",
+    documents: {
+      notification: "/notifications/{entityId}",
+    },
+  },
 };

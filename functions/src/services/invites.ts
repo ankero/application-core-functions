@@ -4,11 +4,14 @@ import { DATABASE } from "../constants";
 import {
   Invite,
   InviteStatus,
-  InviteTargetType,
+  EntityType,
   User,
   UserIdentifierType,
   UserRoleNumbers,
+  Notification,
+  NotificationEventType,
 } from "../interfaces";
+import { createOrUpdateNotification } from "./notifications";
 
 // database
 const db = admin.firestore();
@@ -16,7 +19,7 @@ const db = admin.firestore();
 export async function getInviteByInvitedUserIdentifier(
   invitedUserIdentifier: string,
   inviteTargetId: string,
-  inviteTargetType: InviteTargetType
+  inviteTargetType: EntityType
 ): Promise<Invite | null> {
   try {
     const querySnapshot = await db
@@ -203,7 +206,10 @@ export async function handleInvitationResponse(
       return;
     }
 
+    let notificationEventType;
+
     if (invite.inviteStatus === InviteStatus.ACCEPTED) {
+      notificationEventType = NotificationEventType.GROUP_INVITE_ACCEPTED;
       await doc.ref.set(
         {
           members: {
@@ -215,6 +221,7 @@ export async function handleInvitationResponse(
         { merge: true }
       );
     } else if (invite.inviteStatus === InviteStatus.REJECTED) {
+      notificationEventType = NotificationEventType.GROUP_INVITE_REJECTED;
       await doc.ref.set(
         {
           members: {
@@ -225,6 +232,34 @@ export async function handleInvitationResponse(
         { merge: true }
       );
     }
+
+    if (notificationEventType) {
+      await sendNotificationToNotificationCreator(
+        notificationEventType,
+        invite
+      );
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function sendNotificationToNotificationCreator(
+  notificationEventType: NotificationEventType,
+  invite: Invite
+): Promise<void> {
+  try {
+    const notification = {
+      userId: invite.invitedBy,
+      eventType: notificationEventType,
+      referenceUserIds: [invite.invitedUserIdentifier],
+      referenceEntityId: invite.inviteTargetId,
+      referenceEntityType: invite.inviteTargetType,
+      referenceEntityRef: invite.inviteTargetRef,
+      referenceEntityUri: `/groups/${invite.inviteTargetId}`,
+      referenceEntityPreview: invite.inviteTargetPreview,
+    } as Notification;
+    await createOrUpdateNotification(null, notification);
   } catch (error) {
     throw error;
   }

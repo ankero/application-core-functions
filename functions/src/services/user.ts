@@ -100,6 +100,24 @@ export async function getUserPublicProfile(
   }
 }
 
+export async function listUserPublicProfiles(
+  userIds: Array<string>
+): Promise<Array<PublicUserProfile>> {
+  try {
+    const profilePromises = [] as Array<Promise<PublicUserProfile | null>>;
+
+    userIds.forEach((userId: string) => {
+      profilePromises.push(getUserPublicProfile(userId));
+    });
+
+    const profiles = await Promise.all(profilePromises);
+    const notNullProfiles = profiles.filter((profile) => !!profile);
+    return notNullProfiles.map((profile) => profile as PublicUserProfile);
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function getUserByEmail(email: string): Promise<User | any> {
   try {
     const querySnapshot = await db
