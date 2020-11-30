@@ -124,7 +124,11 @@ export async function createOrUpdateInvite(
       );
 
       if (!existingInvite) {
-        return await createInvite(invite);
+        await createInvite(invite);
+        if (invite.invitedUserIdentifierType === UserIdentifierType.USERID) {
+          await createNotificationFromInvite(invite);
+        }
+        return;
       }
 
       id = existingInvite.id as string;
@@ -152,8 +156,11 @@ export async function claimInvitesForUser(user: User): Promise<void> {
         `No invites found for new user with identifier: ${identifier}.`
       );
     } else {
+      const notificationPromises = [] as Array<Promise<void>>;
       const batch = db.batch();
-      querySnapshot.forEach((snapshot) => {
+      querySnapshot.forEach(async (snapshot) => {
+        const invite = snapshot.data() as Invite;
+        // Claim invite
         batch.set(
           snapshot.ref,
           {
@@ -162,8 +169,17 @@ export async function claimInvitesForUser(user: User): Promise<void> {
           },
           { merge: true }
         );
+        // Send notification for new user
+        notificationPromises.push(
+          createNotificationFromInvite({
+            ...invite,
+            invitedUserIdentifier: user.uid,
+          } as Invite)
+        );
       });
+      // Commit
       await batch.commit();
+      await Promise.all(notificationPromises);
     }
   } catch (error) {
     throw error;
@@ -234,17 +250,14 @@ export async function handleInvitationResponse(
     }
 
     if (notificationEventType) {
-      await sendNotificationToNotificationCreator(
-        notificationEventType,
-        invite
-      );
+      await sendNotificationToInviteCreator(notificationEventType, invite);
     }
   } catch (error) {
     throw error;
   }
 }
 
-async function sendNotificationToNotificationCreator(
+async function sendNotificationToInviteCreator(
   notificationEventType: NotificationEventType,
   invite: Invite
 ): Promise<void> {
@@ -260,6 +273,23 @@ async function sendNotificationToNotificationCreator(
       referenceEntityPreview: invite.inviteTargetPreview,
     } as Notification;
     await createOrUpdateNotification(null, notification);
+  } catch (error) {
+    throw error;
+  }
+}
+
+function createNotificationFromInvite(invite: Invite): Promise<void> {
+  try {
+    return createOrUpdateNotification(null, {
+      userId: invite.invitedUserIdentifier,
+      referenceUserIds: [invite.invitedBy],
+      referenceEntityId: invite.inviteTargetId,
+      referenceEntityType: invite.inviteTargetType,
+      referenceEntityRef: invite.inviteTargetRef,
+      referenceEntityUri: `/invites/${invite.inviteTargetId}`,
+      referenceEntityPreview: invite.inviteTargetPreview,
+      eventType: NotificationEventType.GROUP_INVITATION_RECEIVED,
+    } as Notification);
   } catch (error) {
     throw error;
   }
