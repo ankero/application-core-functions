@@ -7,6 +7,7 @@ export enum InviteStatus {
 
 export enum EntityType {
   GROUP = "group",
+  INTIVE = "invite",
 }
 
 export enum NotificationEventType {
@@ -145,6 +146,7 @@ export interface Notification {
   userId: string;
   read?: boolean;
   seen?: boolean;
+  uri: string;
   referenceUserProfiles?: Array<PublicUserProfile>;
   referenceUserIds: Array<string>;
   referenceEntityId: string;

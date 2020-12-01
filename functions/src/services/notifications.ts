@@ -1,11 +1,35 @@
 import * as admin from "firebase-admin";
 
 import { DATABASE } from "../constants";
-import { EntityType, Notification } from "../interfaces";
+import { EntityType, Notification, NotificationEventType } from "../interfaces";
 import { listUserPublicProfiles } from "./user";
 
 // database
 const db = admin.firestore();
+
+export function getNotificationUri(
+  type: NotificationEventType,
+  entityId: string | null | undefined
+) {
+  if (!entityId) {
+    console.warn(`Missing entityId in getNotificationUri for type: ${type}`);
+    return `/home`;
+  }
+  switch (type) {
+    case NotificationEventType.GROUP_INVITATION_RECEIVED:
+      return `/invites/${entityId}`;
+    case NotificationEventType.GROUP_INVITE_ACCEPTED:
+      return `/groups/${entityId}`;
+    case NotificationEventType.GROUP_INVITE_REJECTED:
+      return `/groups/${entityId}`;
+
+    default:
+      console.warn(
+        `Unhandled notificationEventType in getNotificationUri: ${type}`
+      );
+      return `/home`;
+  }
+}
 
 export async function createOrUpdateNotification(
   notificationId: string | null,

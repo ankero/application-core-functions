@@ -11,7 +11,10 @@ import {
   Notification,
   NotificationEventType,
 } from "../interfaces";
-import { createOrUpdateNotification } from "./notifications";
+import {
+  createOrUpdateNotification,
+  getNotificationUri,
+} from "./notifications";
 
 // database
 const db = admin.firestore();
@@ -45,9 +48,9 @@ export async function getInviteByInvitedUserIdentifier(
   }
 }
 
-export async function createInvite(invite: Invite): Promise<void> {
+export async function createInvite(invite: Invite): Promise<any | void> {
   try {
-    await db
+    return await db
       .collection(DATABASE.invites.collectionName)
       .add({ ...invite, updatedMillis: Date.now() });
   } catch (error) {
@@ -124,9 +127,9 @@ export async function createOrUpdateInvite(
       );
 
       if (!existingInvite) {
-        await createInvite(invite);
+        const doc = await createInvite(invite);
         if (invite.invitedUserIdentifierType === UserIdentifierType.USERID) {
-          await createNotificationFromInvite(invite);
+          await createNotificationFromInvite({ ...invite, id: doc.id });
         }
         return;
       }
@@ -265,6 +268,7 @@ async function sendNotificationToInviteCreator(
     const notification = {
       userId: invite.invitedBy,
       eventType: notificationEventType,
+      uri: getNotificationUri(notificationEventType, invite.inviteTargetId),
       referenceUserIds: [invite.invitedUserIdentifier],
       referenceEntityId: invite.inviteTargetId,
       referenceEntityType: invite.inviteTargetType,
@@ -282,6 +286,10 @@ function createNotificationFromInvite(invite: Invite): Promise<void> {
   try {
     return createOrUpdateNotification(null, {
       userId: invite.invitedUserIdentifier,
+      uri: getNotificationUri(
+        NotificationEventType.GROUP_INVITATION_RECEIVED,
+        invite.id
+      ),
       referenceUserIds: [invite.invitedBy],
       referenceEntityId: invite.inviteTargetId,
       referenceEntityType: invite.inviteTargetType,
