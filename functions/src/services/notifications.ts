@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 
 import { DATABASE } from "../constants";
 import { EntityType, Notification, NotificationEventType } from "../interfaces";
+import { sendNotificationToUserDevices } from "./messaging";
 import { listUserPublicProfiles } from "./user";
 
 // database
@@ -49,6 +50,7 @@ export async function createOrUpdateNotification(
       await db
         .collection(DATABASE.notifications.collectionName)
         .add({ ...notification, createdMillis: Date.now() });
+      await sendNotificationToUserDevices(notification);
     }
   } catch (error) {
     throw error;

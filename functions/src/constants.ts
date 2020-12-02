@@ -31,10 +31,14 @@ export const DATABASE = {
       user: "/users/{entityId}",
       userPublicProfile: "/users/{entityId}/publicProfile/profile",
       userAuditLogs: "/users/{entityId}/publicProfile/{logId}",
+      userDevices: "/users/{entityId}/devices/{deviceId}",
     },
     collections: {
       userAuditLogs: {
         collectionName: "/users/{entityId}/auditLog",
+      },
+      userDevices: {
+        collectionName: "/users/{entityId}/devices",
       },
     },
   },
