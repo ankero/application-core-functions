@@ -109,17 +109,21 @@ export interface LogConfiguration {
   logAddress: string;
 }
 
-export interface ReferenceMap {
+export interface ReplicationConfigurationItem {
   collection: string;
-  source: Array<string>;
   targetKey: string;
+  source: Array<string | number | any>;
+}
+
+export interface ApplicationReplicationConfiguration {
+  users?: Array<ReplicationConfigurationItem>;
+  groups?: Array<ReplicationConfigurationItem>;
 }
 
 export interface ApplicationUserConfiguration {
   generateRandomNameOnCreate?: Boolean;
   generateRandomAvatarOnCreate?: Boolean;
   userFields: Array<ProfileItem>;
-  publicProfileLinks: Array<ReferenceMap>;
 }
 
 export interface ApplicationLoggedInAppConfiguration {

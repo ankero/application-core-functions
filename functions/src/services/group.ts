@@ -6,6 +6,7 @@ import {
   handleAddMultipleMembersToEntity,
   handleRemoveMultipleMembersFromEntity,
 } from "./entityMemberHandlers";
+import { updateObjectReferences } from "./references";
 import { getUserPublicProfile } from "./user";
 
 // database
@@ -113,7 +114,11 @@ export async function handleExistingGroupUpdated(
     );
 
     if (userInvokedChanges) {
-      // Do something if it is necessary to update group metadata somewhere
+      await updateObjectReferences(
+        groupId,
+        { name: group.name, description: group.description },
+        DATABASE.groups.collectionName
+      );
     }
 
     // Remove members that are indicated to be removed

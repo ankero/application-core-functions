@@ -16,6 +16,7 @@ export const DATABASE = {
       userConfiguration: "/application/userConfiguration",
       loggedInAppConfiguration: "/application/loggedInAppConfiguration",
       auditLogConfiguration: "/application/auditLogConfiguration",
+      replicationConfiguration: "/application/replicationConfiguration",
     },
   },
   auditLog: {

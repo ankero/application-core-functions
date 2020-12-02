@@ -51,16 +51,11 @@ export const onUserDeleted = functions.auth.user().onDelete(async (user) => {
 
     await deleteUserBucket(user.uid);
 
-    // Get user profile settings
-    const profileSettings = await getApplicationUserConfiguration();
-
-    if (profileSettings) {
-      await updateObjectReferences(
-        user.uid,
-        { deleted: true },
-        profileSettings.publicProfileLinks
-      );
-    }
+    await updateObjectReferences(
+      user.uid,
+      { deleted: true },
+      DATABASE.users.collectionName
+    );
 
     await createAuditLogEvent({
       event: AuditLogEvents.USER_ACCOUNT_DELETED,
@@ -98,7 +93,7 @@ export const onUserUpdated = functions.firestore
         await updateObjectReferences(
           entityId,
           publicProfile,
-          profileSettings.publicProfileLinks
+          DATABASE.users.collectionName
         );
       }
 
