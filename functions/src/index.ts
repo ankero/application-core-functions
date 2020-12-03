@@ -19,7 +19,7 @@ import {
 } from "./groups";
 import { identifies } from "./analytics";
 import { onInvitationUpdate } from "./invitations";
-import { onNotificationWrite } from "./notifications";
+import { onNotificationWrite, markAllNotificationsRead } from "./notifications";
 export {
   identifies,
   onUserUpdated,
@@ -33,4 +33,5 @@ export {
   leaveGroup,
   onInvitationUpdate,
   onNotificationWrite,
+  markAllNotificationsRead,
 };

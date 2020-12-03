@@ -103,3 +103,39 @@ export async function populateNotificationReferenceUserProfiles(
     throw error;
   }
 }
+
+export async function markAllNotificationsAsReadForUserId(
+  userId: string
+): Promise<void> {
+  try {
+    const querySnapshot = await db
+      .collection(DATABASE.notifications.collectionName)
+      .where("userId", "==", userId)
+      .get();
+
+    if (querySnapshot.empty) {
+      return;
+    }
+
+    const batch = db.batch();
+
+    querySnapshot.forEach((snapshot) => {
+      if (snapshot.data().read) return;
+      batch.set(
+        snapshot.ref,
+        {
+          seen: true,
+          read: true,
+          seenMillis: Date.now(),
+          readMillis: Date.now(),
+          readByReadAll: true,
+        },
+        { merge: true }
+      );
+    });
+
+    await batch.commit();
+  } catch (error) {
+    throw error;
+  }
+}

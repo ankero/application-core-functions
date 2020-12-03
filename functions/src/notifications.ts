@@ -1,7 +1,10 @@
 import * as functions from "firebase-functions";
 import { DATABASE } from "./constants";
 import { Notification } from "./interfaces";
-import { populateNotificationReferenceUserProfiles } from "./services/notifications";
+import {
+  markAllNotificationsAsReadForUserId,
+  populateNotificationReferenceUserProfiles,
+} from "./services/notifications";
 
 const isEqual = require("lodash.isequal");
 
@@ -34,3 +37,21 @@ export const onNotificationWrite = functions.firestore
       throw error;
     }
   });
+
+export const markAllNotificationsRead = functions.https.onCall(
+  async (data, context) => {
+    try {
+      const { uid } = context.auth || ({} as any);
+
+      if (!uid) {
+        throw new Error("UNAUTHORIZED");
+      }
+
+      await markAllNotificationsAsReadForUserId(uid);
+
+      return { success: true };
+    } catch (error) {
+      throw error;
+    }
+  }
+);
