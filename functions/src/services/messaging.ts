@@ -19,7 +19,7 @@ async function getDevicesForUser(userId: string): Promise<any> {
     }
 
     const devices = [] as any;
-    querySnapshot.forEach((snapshot) =>
+    querySnapshot.forEach((snapshot: FirebaseFirestore.DocumentData) =>
       devices.push({ ...snapshot.data(), id: snapshot.id })
     );
 
@@ -95,9 +95,10 @@ function getNotificationMessage(
 export async function sendNotificationToUserDevices(
   notification: Notification
 ) {
+  const tag = `${notification.eventType}_${notification.referenceEntityId}`;
   return sendMessageToUserDevices(
     notification.userId,
-    getNotificationMessage(notification),
+    { ...getNotificationMessage(notification), tag },
     {
       eventType: notification.eventType,
       uri: notification.uri,
