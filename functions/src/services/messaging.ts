@@ -95,10 +95,9 @@ function getNotificationMessage(
 export async function sendNotificationToUserDevices(
   notification: Notification
 ) {
-  const tag = `${notification.eventType}_${notification.referenceEntityId}`;
   return sendMessageToUserDevices(
     notification.userId,
-    { ...getNotificationMessage(notification), tag },
+    { ...getNotificationMessage(notification) },
     {
       eventType: notification.eventType,
       uri: notification.uri,
