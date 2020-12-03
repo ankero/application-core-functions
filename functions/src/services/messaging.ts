@@ -45,9 +45,11 @@ export async function sendMessageToUserDevices(
     }
 
     const deviceTokens = devices.map((device: any) => device.token);
+    // Don't include notification in the message as we want to handle
+    // all notifications manually in the device. This also removes the
+    // duplication of notificaitons on different devices.
     const message = {
       tokens: deviceTokens,
-      notification,
       data,
       webpush: {
         fcmOptions: {
@@ -62,9 +64,7 @@ export async function sendMessageToUserDevices(
   }
 }
 
-function getNotificationMessage(
-  notification: Notification
-): admin.messaging.NotificationMessagePayload {
+function getNotificationMessage(notification: Notification): any {
   switch (notification.eventType) {
     case NotificationEventType.GROUP_INVITATION_RECEIVED:
       return {
@@ -95,10 +95,14 @@ function getNotificationMessage(
 export async function sendNotificationToUserDevices(
   notification: Notification
 ) {
+  const tag =
+    `${notification.eventType}_${notification.uri}` || "notification_/home";
   return sendMessageToUserDevices(
     notification.userId,
     { ...getNotificationMessage(notification) },
     {
+      ...getNotificationMessage(notification),
+      tag,
       eventType: notification.eventType,
       uri: notification.uri,
     }
