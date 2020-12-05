@@ -8,6 +8,7 @@ export enum InviteStatus {
 export enum EntityType {
   GROUP = "group",
   INTIVE = "invite",
+  PROJECT = "project",
 }
 
 export enum NotificationEventType {
@@ -86,6 +87,18 @@ export interface User {
   photoURL?: string;
   createdAtMillis?: number;
   updatedAtMillis?: number;
+}
+
+export interface Project {
+  id?: string;
+  name: string;
+  description?: string;
+  theme?: string;
+  createdBy: string;
+  updatedBy?: string;
+  members: Array<any>;
+  formattedMemberList: Array<User>;
+  processingError?: string | null;
 }
 
 export interface Group {

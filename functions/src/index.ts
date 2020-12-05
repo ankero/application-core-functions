@@ -17,6 +17,12 @@ import {
   onGroupUpdate,
   leaveGroup,
 } from "./groups";
+import {
+  onProjectCreate,
+  onProjectDelete,
+  onProjectUpdate,
+  leaveProject,
+} from "./projects";
 import { identifies } from "./analytics";
 import { onInvitationUpdate } from "./invitations";
 import { onNotificationWrite, markAllNotificationsRead } from "./notifications";
@@ -31,6 +37,10 @@ export {
   onGroupDelete,
   onGroupUpdate,
   leaveGroup,
+  onProjectCreate,
+  onProjectDelete,
+  onProjectUpdate,
+  leaveProject,
   onInvitationUpdate,
   onNotificationWrite,
   markAllNotificationsRead,

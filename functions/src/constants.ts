@@ -48,6 +48,12 @@ export const DATABASE = {
       group: "/groups/{entityId}",
     },
   },
+  projects: {
+    collectionName: "projects",
+    documents: {
+      project: "/projects/{entityId}",
+    },
+  },
   invites: {
     collectionName: "invites",
     documents: {
