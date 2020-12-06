@@ -17,11 +17,11 @@ export function getNotificationUri(
     return `/home`;
   }
   switch (type) {
-    case NotificationEventType.GROUP_INVITATION_RECEIVED:
+    case NotificationEventType.INVITATION_RECEIVED:
       return `/invites/${entityId}`;
-    case NotificationEventType.GROUP_INVITE_ACCEPTED:
+    case NotificationEventType.INVITE_ACCEPTED:
       return `/groups/${entityId}`;
-    case NotificationEventType.GROUP_INVITE_REJECTED:
+    case NotificationEventType.INVITE_REJECTED:
       return `/groups/${entityId}`;
 
     default:

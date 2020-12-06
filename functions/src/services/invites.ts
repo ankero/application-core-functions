@@ -228,7 +228,7 @@ export async function handleInvitationResponse(
     let notificationEventType;
 
     if (invite.inviteStatus === InviteStatus.ACCEPTED) {
-      notificationEventType = NotificationEventType.GROUP_INVITE_ACCEPTED;
+      notificationEventType = NotificationEventType.INVITE_ACCEPTED;
       await doc.ref.set(
         {
           members: {
@@ -240,7 +240,7 @@ export async function handleInvitationResponse(
         { merge: true }
       );
     } else if (invite.inviteStatus === InviteStatus.REJECTED) {
-      notificationEventType = NotificationEventType.GROUP_INVITE_REJECTED;
+      notificationEventType = NotificationEventType.INVITE_REJECTED;
       await doc.ref.set(
         {
           members: {
@@ -287,7 +287,7 @@ function createNotificationFromInvite(invite: Invite): Promise<void> {
     return createOrUpdateNotification(null, {
       userId: invite.invitedUserIdentifier,
       uri: getNotificationUri(
-        NotificationEventType.GROUP_INVITATION_RECEIVED,
+        NotificationEventType.INVITATION_RECEIVED,
         invite.id
       ),
       referenceUserIds: [invite.invitedBy],
@@ -296,7 +296,7 @@ function createNotificationFromInvite(invite: Invite): Promise<void> {
       referenceEntityRef: invite.inviteTargetRef,
       referenceEntityUri: `/invites/${invite.inviteTargetId}`,
       referenceEntityPreview: invite.inviteTargetPreview,
-      eventType: NotificationEventType.GROUP_INVITATION_RECEIVED,
+      eventType: NotificationEventType.INVITATION_RECEIVED,
     } as Notification);
   } catch (error) {
     throw error;

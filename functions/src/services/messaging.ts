@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 import { DATABASE } from "../constants";
-import { Notification, NotificationEventType } from "../interfaces";
+import { EntityType, Notification, NotificationEventType } from "../interfaces";
 const db = admin.firestore();
 
 async function getDevicesForUser(userId: string): Promise<any> {
@@ -64,22 +64,38 @@ export async function sendMessageToUserDevices(
   }
 }
 
+function getNotificationReferenceEntityLiteral(
+  notification: Notification
+): string {
+  switch (notification.referenceEntityType) {
+    case EntityType.GROUP:
+      return "group";
+    case EntityType.PROJECT:
+      return "project";
+    case EntityType.INTIVE:
+      return "invite";
+    default:
+      return "place";
+  }
+}
+
 function getNotificationMessage(notification: Notification): any {
+  const entityLiteral = getNotificationReferenceEntityLiteral(notification);
   switch (notification.eventType) {
-    case NotificationEventType.GROUP_INVITATION_RECEIVED:
+    case NotificationEventType.INVITATION_RECEIVED:
       return {
         title: `New invitation`,
-        body: `You've been invited to join group: ${notification.referenceEntityPreview.name}`,
+        body: `You've been invited to join ${entityLiteral}: ${notification.referenceEntityPreview.name}`,
       };
-    case NotificationEventType.GROUP_INVITE_ACCEPTED:
+    case NotificationEventType.INVITE_ACCEPTED:
       return {
         title: `Invite accepted`,
-        body: `Invitation accepted to group: ${notification.referenceEntityPreview.name}`,
+        body: `Invitation accepted to ${entityLiteral}: ${notification.referenceEntityPreview.name}`,
       };
-    case NotificationEventType.GROUP_INVITE_REJECTED:
+    case NotificationEventType.INVITE_REJECTED:
       return {
         title: `Invite rejected`,
-        body: `Invitation rejected to group: ${notification.referenceEntityPreview.name}`,
+        body: `Invitation rejected to ${entityLiteral}: ${notification.referenceEntityPreview.name}`,
       };
 
     default:
