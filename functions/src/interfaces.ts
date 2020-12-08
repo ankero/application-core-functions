@@ -1,3 +1,5 @@
+import * as admin from "firebase-admin";
+
 export enum InviteStatus {
   PENDING = "pending",
   REJECTED = "rejected",
@@ -47,12 +49,17 @@ export enum AuditLogEvents {
   USER_REQUESTED_DATA_DOWNLOAD = "USER_REQUESTED_DATA_DOWNLOAD",
   USER_SIGNED_IN = "USER_SIGNED_IN",
 }
+export interface MembershipObject {
+  [id: string]: UserRoleNumbers | admin.firestore.FieldValue;
+}
 
 export interface PublicUserProfile {
   id: string;
+  entityType?: EntityType;
   publicName?: string;
   publicPhotoUrl?: string;
   role?: UserRoleType | null;
+  members?: MembershipObject;
 }
 
 export interface EntityPreview {
@@ -66,7 +73,7 @@ export interface Invite {
   inviteTargetId: string;
   inviteTargetType: EntityType;
   inviteTargetPreview: EntityPreview;
-  inviteTargetRef: any;
+  inviteTargetRef: admin.firestore.DocumentReference;
   invitedBy: string;
   inviterProfile: User | null;
   invitedUserIdentifier: string;
@@ -96,8 +103,8 @@ export interface Project {
   theme?: string;
   createdBy: string;
   updatedBy?: string;
-  members: Array<any>;
-  formattedMemberList: Array<User>;
+  members: MembershipObject;
+  formattedMemberList: Array<PublicUserProfile>;
   processingError?: string | null;
 }
 
@@ -107,8 +114,8 @@ export interface Group {
   description?: string;
   createdBy: string;
   updatedBy?: string;
-  members: Array<any>;
-  formattedMemberList: Array<User>;
+  members: MembershipObject;
+  formattedMemberList: Array<PublicUserProfile>;
   processingError?: string | null;
 }
 
@@ -126,6 +133,8 @@ export interface ReplicationConfigurationItem {
   collection: string;
   targetKey: string;
   source: Array<string | number | any>;
+  inheritMembers?: boolean;
+  deleteReferencesOnDelete?: boolean;
 }
 
 export interface ApplicationReplicationConfiguration {
@@ -154,8 +163,8 @@ export interface ProfileItem {
 }
 
 export interface OldAndNewEntityMemberComparison {
-  removedMembers: Array<any>;
-  addedMembers: Array<any>;
+  removedMembers: MembershipObject;
+  addedMembers: MembershipObject;
 }
 
 export interface Notification {
@@ -168,7 +177,7 @@ export interface Notification {
   referenceUserIds: Array<string>;
   referenceEntityId: string;
   referenceEntityType: EntityType;
-  referenceEntityRef: any;
+  referenceEntityRef: admin.firestore.DocumentReference;
   referenceEntityUri?: string;
   referenceEntityPreview: EntityPreview;
   eventType: NotificationEventType;

@@ -268,7 +268,11 @@ async function sendNotificationToInviteCreator(
     const notification = {
       userId: invite.invitedBy,
       eventType: notificationEventType,
-      uri: getNotificationUri(notificationEventType, invite.inviteTargetId),
+      uri: getNotificationUri(
+        notificationEventType,
+        invite.inviteTargetId,
+        invite.inviteTargetType
+      ),
       referenceUserIds: [invite.invitedUserIdentifier],
       referenceEntityId: invite.inviteTargetId,
       referenceEntityType: invite.inviteTargetType,
@@ -288,7 +292,8 @@ function createNotificationFromInvite(invite: Invite): Promise<void> {
       userId: invite.invitedUserIdentifier,
       uri: getNotificationUri(
         NotificationEventType.INVITATION_RECEIVED,
-        invite.id
+        invite.id,
+        invite.inviteTargetType
       ),
       referenceUserIds: [invite.invitedBy],
       referenceEntityId: invite.inviteTargetId,

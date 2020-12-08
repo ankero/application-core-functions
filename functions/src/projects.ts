@@ -39,13 +39,21 @@ export const onProjectCreate = functions.firestore
     const project = change.data() as Project;
 
     try {
-      await handleNewProjectCreated(entityId, project, change.ref);
+      const { updatedMembers } = await handleNewProjectCreated(
+        entityId,
+        project,
+        change.ref
+      );
       const formattedMemberList = await getPublicProfilesForMemberList(
-        project.members
+        project.members,
+        project.formattedMemberList
       );
 
       await updateProject(entityId, {
-        ...project,
+        members: {
+          ...project.members,
+          ...updatedMembers,
+        },
         formattedMemberList,
       });
     } catch (error) {
@@ -62,7 +70,10 @@ export const onProjectUpdate = functions.firestore
     const prevProject = change.before.data() as Project;
 
     try {
-      const hasChangesInMembers = await handleExistingProjectUpdated(
+      const {
+        hasChangesInMembers,
+        updatedMembers,
+      } = await handleExistingProjectUpdated(
         entityId,
         project,
         prevProject,
@@ -71,11 +82,15 @@ export const onProjectUpdate = functions.firestore
 
       if (hasChangesInMembers) {
         const formattedMemberList = await getPublicProfilesForMemberList(
-          project.members
+          project.members,
+          project.formattedMemberList
         );
 
         await updateProject(entityId, {
-          ...project,
+          members: {
+            ...project.members,
+            ...updatedMembers,
+          },
           formattedMemberList,
         });
       }

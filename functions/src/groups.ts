@@ -11,6 +11,7 @@ import {
 import { deleteInvitesForEntity } from "./services/invites";
 import { Group, EntityType, UserRoleNumbers } from "./interfaces";
 import { getPublicProfilesForMemberList } from "./services/entityMemberHandlers";
+import { deleteObjectReferences } from "./services/references";
 
 async function handleGroupError(
   entityId: string,
@@ -39,13 +40,21 @@ export const onGroupCreate = functions.firestore
     const group = change.data() as Group;
 
     try {
-      await handleNewGroupCreated(entityId, group, change.ref);
+      const { updatedMembers } = await handleNewGroupCreated(
+        entityId,
+        group,
+        change.ref
+      );
       const formattedMemberList = await getPublicProfilesForMemberList(
-        group.members
+        group.members,
+        group.formattedMemberList
       );
 
       await updateGroup(entityId, {
-        ...group,
+        members: {
+          ...group.members,
+          ...updatedMembers,
+        },
         formattedMemberList,
       });
     } catch (error) {
@@ -62,7 +71,10 @@ export const onGroupUpdate = functions.firestore
     const prevGroup = change.before.data() as Group;
 
     try {
-      const hasChangesInMembers = await handleExistingGroupUpdated(
+      const {
+        hasChangesInMembers,
+        updatedMembers,
+      } = await handleExistingGroupUpdated(
         entityId,
         group,
         prevGroup,
@@ -71,11 +83,15 @@ export const onGroupUpdate = functions.firestore
 
       if (hasChangesInMembers) {
         const formattedMemberList = await getPublicProfilesForMemberList(
-          group.members
+          group.members,
+          group.formattedMemberList
         );
 
         await updateGroup(entityId, {
-          ...group,
+          members: {
+            ...group.members,
+            ...updatedMembers,
+          },
           formattedMemberList,
         });
       }
@@ -89,8 +105,22 @@ export const onGroupDelete = functions.firestore
   .document(DATABASE.groups.documents.group)
   .onDelete(async (change, context) => {
     const { entityId } = context.params;
+    const group = change.data() as Group;
 
     try {
+      const nonInvitedMembers = [] as Array<string>;
+      Object.keys(group.members).forEach((memberId) => {
+        const memberRole = group.members[memberId] as UserRoleNumbers;
+        if (memberRole > UserRoleNumbers.INVITED) {
+          nonInvitedMembers.push(memberId);
+        }
+      });
+      await deleteObjectReferences(
+        entityId,
+        DATABASE.groups.collectionName,
+        EntityType.GROUP,
+        nonInvitedMembers
+      );
       await deleteInvitesForEntity(entityId, EntityType.GROUP);
     } catch (error) {
       throw error;

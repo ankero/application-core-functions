@@ -8,21 +8,38 @@ import { listUserPublicProfiles } from "./user";
 // database
 const db = admin.firestore();
 
+function getNotificationUriRoot(entityType: EntityType) {
+  switch (entityType) {
+    case EntityType.GROUP:
+      return "/groups";
+    case EntityType.PROJECT:
+      return "/projects";
+    case EntityType.INTIVE:
+      return "/invites";
+    default:
+      return "/home";
+  }
+}
+
 export function getNotificationUri(
   type: NotificationEventType,
-  entityId: string | null | undefined
+  entityId: string | null | undefined,
+  entityType: EntityType
 ) {
   if (!entityId) {
     console.warn(`Missing entityId in getNotificationUri for type: ${type}`);
     return `/home`;
   }
+
+  const uriRoot = getNotificationUriRoot(entityType);
+
   switch (type) {
     case NotificationEventType.INVITATION_RECEIVED:
       return `/invites/${entityId}`;
     case NotificationEventType.INVITE_ACCEPTED:
-      return `/groups/${entityId}`;
+      return `${uriRoot}/${entityId}`;
     case NotificationEventType.INVITE_REJECTED:
-      return `/groups/${entityId}`;
+      return `${uriRoot}/${entityId}`;
 
     default:
       console.warn(

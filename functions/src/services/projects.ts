@@ -1,10 +1,17 @@
 import * as admin from "firebase-admin";
 import { DATABASE } from "../constants";
-import { Project, EntityPreview, EntityType } from "../interfaces";
+import {
+  Project,
+  EntityPreview,
+  EntityType,
+  MembershipObject,
+} from "../interfaces";
 import {
   compareOldAndNewEntityMembers,
+  filterNewMembersToUsersAndGroups,
   handleAddMultipleMembersToEntity,
   handleRemoveMultipleMembersFromEntity,
+  handleAddMultipleGroupsToEntity,
 } from "./entityMemberHandlers";
 import { updateObjectReferences } from "./references";
 import { getUserPublicProfile } from "./user";
@@ -14,12 +21,15 @@ const db = admin.firestore();
 
 export async function updateProject(
   projectId: string,
-  data: Project
+  data: Project | any
 ): Promise<void> {
   try {
     await db
       .doc(DATABASE.projects.documents.project.replace("{entityId}", projectId))
-      .set({ ...data, processing: false }, { merge: true });
+      .set(
+        { ...data, processing: false, processingError: "" },
+        { merge: true }
+      );
   } catch (error) {
     throw error;
   }
@@ -68,35 +78,47 @@ export async function removeProjectMember(
 export async function handleNewProjectCreated(
   projectId: string,
   project: Project,
-  projectRef: any
-): Promise<boolean> {
+  projectRef: admin.firestore.DocumentReference
+): Promise<any> {
   try {
-    const membersForNewProject = [] as Array<any>;
-    Object.keys(project.members).forEach((memberId: any) => {
-      if (memberId !== project.createdBy) {
-        membersForNewProject.push({
-          [memberId]: project.members[memberId],
-        });
-      }
-    });
-
-    const inviter = await getUserPublicProfile(project.createdBy);
-
-    const inviteTargetPreview = {
-      name: project.name,
-    } as EntityPreview;
-
-    await handleAddMultipleMembersToEntity(
-      membersForNewProject,
-      projectId,
-      EntityType.PROJECT,
-      project.createdBy,
-      inviteTargetPreview,
-      inviter,
-      projectRef
+    const { userIds, groupIds } = filterNewMembersToUsersAndGroups(
+      project.members
     );
+    let newMemberList = {} as MembershipObject;
 
-    return true;
+    if (userIds.length > 0) {
+      const inviter = await getUserPublicProfile(project.createdBy);
+
+      const inviteTargetPreview = {
+        name: project.name,
+      } as EntityPreview;
+
+      await handleAddMultipleMembersToEntity(
+        project.members,
+        userIds,
+        projectId,
+        EntityType.PROJECT,
+        project.createdBy,
+        inviteTargetPreview,
+        inviter,
+        projectRef
+      );
+    }
+
+    if (groupIds.length > 0) {
+      const { members } = await handleAddMultipleGroupsToEntity(
+        groupIds,
+        project.members,
+        projectRef,
+        false
+      );
+      newMemberList = { ...newMemberList, ...members };
+    }
+
+    return {
+      hasChangesInMembers: userIds.length > 0 || groupIds.length > 0,
+      updatedMembers: newMemberList,
+    };
   } catch (error) {
     throw error;
   }
@@ -106,8 +128,8 @@ export async function handleExistingProjectUpdated(
   projectId: string,
   project: Project,
   prevProject: Project,
-  projectRef: any
-): Promise<boolean> {
+  projectRef: admin.firestore.DocumentReference
+): Promise<any> {
   try {
     // This is a old Project, check for changes
     const userInvokedChanges =
@@ -117,6 +139,7 @@ export async function handleExistingProjectUpdated(
       project,
       prevProject
     );
+    let newMemberList = {} as MembershipObject;
 
     if (userInvokedChanges) {
       await updateObjectReferences(
@@ -127,36 +150,61 @@ export async function handleExistingProjectUpdated(
     }
 
     // Remove members that are indicated to be removed
-    if (removedMembers.length > 0) {
-      await handleRemoveMultipleMembersFromEntity(
+    if (Object.keys(removedMembers).length > 0) {
+      const userIdsToRemove = await handleRemoveMultipleMembersFromEntity(
         removedMembers,
         projectId,
+        project,
         EntityType.PROJECT
       );
+      userIdsToRemove.forEach((userId) => {
+        newMemberList[userId] = admin.firestore.FieldValue.delete();
+      });
     }
 
     // Add members that are indicated to be added
-    if (addedMembers.length > 0) {
-      const inviter = await getUserPublicProfile(
-        project.updatedBy || project.createdBy
+    if (Object.keys(addedMembers).length > 0) {
+      const { userIds, groupIds } = filterNewMembersToUsersAndGroups(
+        addedMembers
       );
 
-      const inviteTargetPreview = {
-        name: project.name,
-      } as EntityPreview;
+      if (userIds.length > 0) {
+        const inviter = await getUserPublicProfile(
+          project.updatedBy || project.createdBy
+        );
 
-      await handleAddMultipleMembersToEntity(
-        addedMembers,
-        projectId,
-        EntityType.PROJECT,
-        project.updatedBy || project.createdBy,
-        inviteTargetPreview,
-        inviter,
-        projectRef
-      );
+        const inviteTargetPreview = {
+          name: project.name,
+        } as EntityPreview;
+
+        await handleAddMultipleMembersToEntity(
+          project.members,
+          userIds,
+          projectId,
+          EntityType.PROJECT,
+          project.updatedBy || project.createdBy,
+          inviteTargetPreview,
+          inviter,
+          projectRef
+        );
+      }
+
+      if (groupIds.length > 0) {
+        const { members } = await handleAddMultipleGroupsToEntity(
+          groupIds,
+          project.members,
+          projectRef,
+          false
+        );
+        newMemberList = { ...newMemberList, ...members };
+      }
     }
-
-    return removedMembers.length > 0 || addedMembers.length > 0;
+    return {
+      hasChangesInMembers:
+        Object.keys(removedMembers).length > 0 ||
+        Object.keys(addedMembers).length > 0,
+      updatedMembers: newMemberList,
+    };
   } catch (error) {
     throw error;
   }

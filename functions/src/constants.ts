@@ -4,6 +4,8 @@
  * This helps to keep the same type of approach and minimise any silly mistakes.
  */
 
+import { EntityType } from "./interfaces";
+
 export const STORAGE = {
   userPublicFiles: "users/{entityId}/PUBLIC/",
   userPrivateFiles: "users/{entityId}/PRIVATE/",
@@ -67,3 +69,5 @@ export const DATABASE = {
     },
   },
 };
+
+export const GROUP_COMPOSITE_ID_PREFIX = `${EntityType.GROUP}:`;

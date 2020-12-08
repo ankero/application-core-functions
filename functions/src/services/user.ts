@@ -37,7 +37,7 @@ export async function createOrUpdateProfilePublicData(
   }
 }
 
-export async function deleteProfile(userId: string) {
+export async function deleteProfile(userId: string): Promise<void> {
   try {
     await db
       .doc(
@@ -58,9 +58,7 @@ export async function deleteProfile(userId: string) {
   }
 }
 
-export async function getUser(
-  userId: string
-): Promise<PublicUserProfile | null> {
+export async function getUser(userId: string): Promise<User | null> {
   try {
     const doc = await db
       .doc(DATABASE.users.documents.user.replace("{entityId}", userId))
@@ -72,7 +70,7 @@ export async function getUser(
     return {
       ...doc.data(),
       id: userId,
-    } as PublicUserProfile;
+    } as User;
   } catch (error) {
     throw error;
   }
@@ -162,9 +160,10 @@ export async function getUserByNumber(number: string): Promise<User | null> {
 
 export async function getUsersBasedOnEmailOrNumber(
   emailOrNumber: string
-): Promise<any> {
+): Promise<{ emailOrNumber: string; type: UserIdentifierType; user: User }> {
   const { email, number } = isEmailOrNumber(emailOrNumber);
-  let type, user;
+  let type = UserIdentifierType.EMAIL;
+  let user;
   if (email) {
     type = UserIdentifierType.EMAIL;
     user = await getUserByEmail(email);
@@ -173,9 +172,13 @@ export async function getUsersBasedOnEmailOrNumber(
     user = await getUserByNumber(number);
   }
 
+  if (user) {
+    type = UserIdentifierType.USERID;
+  }
+
   return {
     emailOrNumber,
-    type: user ? UserIdentifierType.USERID : type,
+    type,
     user,
   };
 }
