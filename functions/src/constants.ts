@@ -34,6 +34,7 @@ export const DATABASE = {
       userPublicProfile: "/users/{entityId}/publicProfile/profile",
       userAuditLogs: "/users/{entityId}/publicProfile/{logId}",
       userDevices: "/users/{entityId}/devices/{deviceId}",
+      userPredictions: "/users/{entityId}/predictions/predictions",
     },
     collections: {
       userAuditLogs: {
@@ -41,6 +42,9 @@ export const DATABASE = {
       },
       userDevices: {
         collectionName: "/users/{entityId}/devices",
+      },
+      userPredictions: {
+        collectionName: "/users/{entityId}/predictions",
       },
     },
   },

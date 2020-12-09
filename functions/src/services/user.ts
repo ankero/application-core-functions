@@ -50,6 +50,12 @@ export async function deleteProfile(userId: string): Promise<void> {
         userId
       )
     );
+    await deleteCollection(
+      DATABASE.users.collections.userPredictions.collectionName.replace(
+        "{entityId}",
+        userId
+      )
+    );
     await db
       .doc(DATABASE.users.documents.user.replace("{entityId}", userId))
       .delete();
