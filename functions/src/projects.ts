@@ -8,9 +8,11 @@ import {
   getProjectById,
   handleExistingProjectUpdated,
   handleNewProjectCreated,
+  handleProjectMembersUpdate,
   removeProjectMember,
   updateProject,
 } from "./services/projects";
+import { getValidMemberObject } from "./services/validators";
 
 async function handleProjectError(
   entityId: string,
@@ -70,30 +72,7 @@ export const onProjectUpdate = functions.firestore
     const prevProject = change.before.data() as Project;
 
     try {
-      const {
-        hasChangesInMembers,
-        updatedMembers,
-      } = await handleExistingProjectUpdated(
-        entityId,
-        project,
-        prevProject,
-        change.after.ref
-      );
-
-      if (hasChangesInMembers) {
-        const formattedMemberList = await getPublicProfilesForMemberList(
-          project.members,
-          project.formattedMemberList
-        );
-
-        await updateProject(entityId, {
-          members: {
-            ...project.members,
-            ...updatedMembers,
-          },
-          formattedMemberList,
-        });
-      }
+      await handleExistingProjectUpdated(entityId, project, prevProject);
     } catch (error) {
       await handleProjectError(entityId, project, error);
       throw error;
@@ -112,6 +91,56 @@ export const onProjectDelete = functions.firestore
     }
   });
 
+export const updateProjectMembers = functions.https.onCall(
+  async (data, context) => {
+    try {
+      const { uid } = context.auth || ({} as any);
+
+      if (!uid) {
+        throw new Error("UNAUTHORIZED");
+      }
+
+      const { projectId, members } = data;
+
+      if (!projectId) {
+        throw new Error("PROJECT ID MISSING");
+      }
+
+      if (!members) {
+        throw new Error("MEMBERS DATA MISSING");
+      }
+
+      const project = await getProjectById(projectId);
+
+      if (!project) {
+        // This is really "not found" but we don't want to expose this
+        // info to potential hackers
+        throw new Error("UNAUTHORIZED");
+      }
+
+      const userRole = project.members[uid];
+
+      if (!userRole) {
+        throw new Error("UNAUTHORIZED");
+      }
+
+      if (userRole < UserRoleNumbers.EDITOR) {
+        throw new Error("UNAUTHORIZED");
+      }
+
+      await handleProjectMembersUpdate(
+        projectId,
+        getValidMemberObject(projectId, members),
+        project
+      );
+
+      return { success: true };
+    } catch (error) {
+      throw error;
+    }
+  }
+);
+
 export const leaveProject = functions.https.onCall(async (data, context) => {
   try {
     const { uid } = context.auth || ({} as any);
@@ -126,7 +155,6 @@ export const leaveProject = functions.https.onCall(async (data, context) => {
       throw new Error("PROJECT ID MISSING");
     }
 
-    // TODO
     const project = await getProjectById(projectId);
 
     if (!project) {

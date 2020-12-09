@@ -58,6 +58,7 @@ export async function handleRemoveMultipleMembersFromEntity(
       } else {
         removedGroups.push(memberId);
       }
+      membersFromGroupsToBeRemovedFromEntity.push(memberId);
     });
 
     if (removedUsers.length > 0) {
@@ -271,17 +272,17 @@ export async function getPublicProfilesForMemberList(
 }
 
 export function compareOldAndNewEntityMembers(
-  newEntity: Group | Project,
-  oldEntity: Group | Project,
+  newMembers: MembershipObject,
+  oldMembers: MembershipObject,
   entityId?: string
 ): OldAndNewEntityMemberComparison {
   const removedMembers = {} as MembershipObject;
   const addedMembers = {} as MembershipObject;
 
   // Find new invited users
-  Object.keys(newEntity.members).forEach((memberId: any) => {
+  Object.keys(newMembers).forEach((memberId: any) => {
     let isSelfEntity = false;
-    const foundInPrevDocument = isInMembers(oldEntity.members, memberId);
+    const foundInPrevDocument = isInMembers(oldMembers, memberId);
     if (isCompositeId(memberId)) {
       isSelfEntity = entityId === getPureId(memberId);
     }
@@ -289,14 +290,14 @@ export function compareOldAndNewEntityMembers(
       // Push if not already added and this is not self added with composite id
       // The composite ID check needs to be done to make sure group doesn't add itself to itself
       // I'm sure there's a meme about this somewhere...
-      addedMembers[memberId] = newEntity.members[memberId];
+      addedMembers[memberId] = newMembers[memberId];
     }
   });
 
   // Find removed users
-  Object.keys(oldEntity.members).forEach((memberId: any) => {
-    if (!isInMembers(newEntity.members, memberId)) {
-      removedMembers[memberId] = oldEntity.members[memberId];
+  Object.keys(oldMembers).forEach((memberId: any) => {
+    if (!isInMembers(newMembers, memberId)) {
+      removedMembers[memberId] = oldMembers[memberId];
     }
   });
 

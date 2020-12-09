@@ -4,6 +4,7 @@ import { DATABASE } from "./constants";
 import {
   getGroupById,
   handleExistingGroupUpdated,
+  handleGroupMembersUpdate,
   handleNewGroupCreated,
   removeGroupMember,
   updateGroup,
@@ -12,6 +13,7 @@ import { deleteInvitesForEntity } from "./services/invites";
 import { Group, EntityType, UserRoleNumbers } from "./interfaces";
 import { getPublicProfilesForMemberList } from "./services/entityMemberHandlers";
 import { deleteObjectReferences } from "./services/references";
+import { getValidMemberObject } from "./services/validators";
 
 async function handleGroupError(
   entityId: string,
@@ -71,30 +73,7 @@ export const onGroupUpdate = functions.firestore
     const prevGroup = change.before.data() as Group;
 
     try {
-      const {
-        hasChangesInMembers,
-        updatedMembers,
-      } = await handleExistingGroupUpdated(
-        entityId,
-        group,
-        prevGroup,
-        change.after.ref
-      );
-
-      if (hasChangesInMembers) {
-        const formattedMemberList = await getPublicProfilesForMemberList(
-          group.members,
-          group.formattedMemberList
-        );
-
-        await updateGroup(entityId, {
-          members: {
-            ...group.members,
-            ...updatedMembers,
-          },
-          formattedMemberList,
-        });
-      }
+      await handleExistingGroupUpdated(entityId, group, prevGroup);
     } catch (error) {
       await handleGroupError(entityId, group, error);
       throw error;
@@ -127,6 +106,56 @@ export const onGroupDelete = functions.firestore
     }
   });
 
+export const updateGroupMembers = functions.https.onCall(
+  async (data, context) => {
+    try {
+      const { uid } = context.auth || ({} as any);
+
+      if (!uid) {
+        throw new Error("UNAUTHORIZED");
+      }
+
+      const { groupId, members } = data;
+
+      if (!groupId) {
+        throw new Error("GROUP ID MISSING");
+      }
+
+      if (!members) {
+        throw new Error("MEMBERS DATA MISSING");
+      }
+
+      const group = await getGroupById(groupId);
+
+      if (!group) {
+        // This is really "not found" but we don't want to expose this
+        // info to potential hackers
+        throw new Error("UNAUTHORIZED");
+      }
+
+      const userRole = group.members[uid];
+
+      if (!userRole) {
+        throw new Error("UNAUTHORIZED");
+      }
+
+      if (userRole < UserRoleNumbers.EDITOR) {
+        throw new Error("UNAUTHORIZED");
+      }
+
+      await handleGroupMembersUpdate(
+        groupId,
+        getValidMemberObject(groupId, members),
+        group
+      );
+
+      return { success: true };
+    } catch (error) {
+      throw error;
+    }
+  }
+);
+
 export const leaveGroup = functions.https.onCall(async (data, context) => {
   try {
     const { uid } = context.auth || ({} as any);
@@ -157,7 +186,11 @@ export const leaveGroup = functions.https.onCall(async (data, context) => {
       throw new Error("Owners cannot remove self");
     }
 
+    const membersWithoutUser = { ...group.members };
+    delete membersWithoutUser[uid];
+
     await removeGroupMember(groupId, group, uid);
+    await handleGroupMembersUpdate(groupId, membersWithoutUser, group);
 
     return { success: true };
   } catch (error) {

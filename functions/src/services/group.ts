@@ -10,6 +10,7 @@ import {
 import {
   compareOldAndNewEntityMembers,
   filterNewMembersToUsersAndGroups,
+  getPublicProfilesForMemberList,
   handleAddMultipleGroupsToEntity,
   handleAddMultipleMembersToEntity,
   handleRemoveMultipleMembersFromEntity,
@@ -59,6 +60,7 @@ export async function getGroupById(groupId: string): Promise<Group | null> {
     return {
       ...group.data(),
       id: groupId,
+      ref: group.ref,
     } as Group;
   } catch (error) {
     throw error;
@@ -134,20 +136,62 @@ export async function handleNewGroupCreated(
 export async function handleExistingGroupUpdated(
   groupId: string,
   group: Group,
-  prevGroup: Group,
-  groupRef: admin.firestore.DocumentReference
-): Promise<any> {
+  prevGroup: Group
+): Promise<void> {
   try {
     const userInvokedChanges =
       group.name !== prevGroup.name ||
       group.description !== prevGroup.description;
     const { removedMembers, addedMembers } = compareOldAndNewEntityMembers(
-      group,
-      prevGroup,
+      group.members,
+      prevGroup.members,
       groupId
     );
 
-    let newMemberList = {} as MembershipObject;
+    if (userInvokedChanges) {
+      await updateObjectReferences(
+        groupId,
+        {
+          name: group.name,
+          publicName: group.name,
+          description: group.description,
+          members: group.members,
+        },
+        DATABASE.groups.collectionName
+      );
+    }
+
+    if (
+      Object.keys(removedMembers).length > 0 ||
+      Object.keys(addedMembers).length > 0
+    ) {
+      const formattedMemberList = await getPublicProfilesForMemberList(
+        group.members,
+        group.formattedMemberList
+      );
+
+      await updateGroup(groupId, {
+        formattedMemberList,
+      });
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function handleGroupMembersUpdate(
+  groupId: string,
+  newMembers: MembershipObject,
+  group: Group
+): Promise<{ hasChangesInMembers: boolean; updatedMembers: MembershipObject }> {
+  try {
+    const { removedMembers, addedMembers } = compareOldAndNewEntityMembers(
+      newMembers,
+      group.members,
+      groupId
+    );
+
+    let newMemberList = newMembers;
     const removedNonInvitedMembers = [] as Array<string>;
     const addedNonInvitedMembers = [] as Array<string>;
 
@@ -164,7 +208,6 @@ export async function handleExistingGroupUpdated(
     });
 
     if (
-      userInvokedChanges ||
       removedNonInvitedMembers.length > 0 ||
       addedNonInvitedMembers.length > 0
     ) {
@@ -184,12 +227,15 @@ export async function handleExistingGroupUpdated(
 
     // Remove members that are indicated to be removed
     if (Object.keys(removedMembers).length > 0) {
-      await handleRemoveMultipleMembersFromEntity(
+      const userIdsToRemove = await handleRemoveMultipleMembersFromEntity(
         removedMembers,
         groupId,
         group,
         EntityType.GROUP
       );
+      userIdsToRemove.forEach((userId) => {
+        newMemberList[userId] = admin.firestore.FieldValue.delete();
+      });
     }
 
     // Add members that are indicated to be added
@@ -215,7 +261,7 @@ export async function handleExistingGroupUpdated(
           group.updatedBy || group.createdBy,
           inviteTargetPreview,
           inviter,
-          groupRef
+          group.ref
         );
       }
 
@@ -223,17 +269,19 @@ export async function handleExistingGroupUpdated(
         const { members } = await handleAddMultipleGroupsToEntity(
           groupIds,
           group.members,
-          groupRef,
+          group.ref,
           false
         );
         newMemberList = { ...newMemberList, ...members };
       }
     }
 
+    if (Object.keys(newMemberList).length > 0) {
+      await group.ref.set({ members: newMemberList }, { merge: true });
+    }
+
     return {
-      hasChangesInMembers:
-        Object.keys(removedMembers).length > 0 ||
-        Object.keys(addedMembers).length > 0,
+      hasChangesInMembers: Object.keys(newMemberList).length > 0,
       updatedMembers: newMemberList,
     };
   } catch (error) {

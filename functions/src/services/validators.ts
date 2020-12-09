@@ -1,3 +1,5 @@
+import { MembershipObject, UserRoleNumbers } from "../interfaces";
+
 export const isEmailOrNumber = (emailOrNumber: string): any => {
   if (validateEmail(emailOrNumber)) return { email: emailOrNumber };
   else if (validateNumber(emailOrNumber)) return { number: emailOrNumber };
@@ -20,5 +22,43 @@ export const validateNumber = (number: string): boolean => {
 };
 
 export const escapeDotAddress = (value: string) => {
-  return value.replace(/\./g, "\\.");
+  return `\`${value.replace(/\./g, "\\.")}\``;
+};
+
+export const getValidMemberObject = (
+  entityId: string,
+  members: MembershipObject
+): MembershipObject => {
+  let ownerId = null as any;
+  const validMembersObject = {} as MembershipObject;
+
+  Object.keys(members).forEach((memberId) => {
+    const roleNumber = members[memberId];
+    if (ownerId && roleNumber === UserRoleNumbers.OWNER) {
+      throw Error("Only one owner allowed");
+    }
+    if (roleNumber === UserRoleNumbers.OWNER) {
+      ownerId = memberId;
+    }
+    if (
+      typeof roleNumber === "number" &&
+      roleNumber >= UserRoleNumbers.INVITED &&
+      roleNumber <= UserRoleNumbers.OWNER
+    ) {
+      validMembersObject[memberId] = roleNumber;
+    }
+  });
+
+  if (Object.keys(validMembersObject).length === 0) {
+    throw new Error("Invalid members object");
+  }
+
+  if (Object.keys(validMembersObject).length !== Object.keys(members).length) {
+    console.info(
+      `Incoming member data has invalid inputs. EntityId: ${entityId}, incoming data: ${JSON.stringify(
+        members
+      )}, valid data: ${JSON.stringify(validMembersObject)}`
+    );
+  }
+  return validMembersObject;
 };

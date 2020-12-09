@@ -6,11 +6,13 @@ import {
   InviteStatus,
   EntityType,
   User,
+  Group,
   UserIdentifierType,
   UserRoleNumbers,
   Notification,
   NotificationEventType,
 } from "../interfaces";
+import { handleGroupMembersUpdate } from "./group";
 import {
   createOrUpdateNotification,
   getNotificationUri,
@@ -229,16 +231,32 @@ export async function handleInvitationResponse(
 
     if (invite.inviteStatus === InviteStatus.ACCEPTED) {
       notificationEventType = NotificationEventType.INVITE_ACCEPTED;
-      await doc.ref.set(
-        {
-          members: {
-            ...data.members,
-            [`${invite.invitedUserIdentifier}`]: UserRoleNumbers.MEMBER,
-            [`${invite.invitedUserLiteral}`]: admin.firestore.FieldValue.delete(),
+
+      if (invite.inviteTargetType !== EntityType.GROUP) {
+        // Non groups handled directly
+        await doc.ref.set(
+          {
+            members: {
+              ...data.members,
+              [invite.invitedUserIdentifier]: UserRoleNumbers.MEMBER,
+              [invite.invitedUserLiteral]: admin.firestore.FieldValue.delete(),
+            },
           },
-        },
-        { merge: true }
-      );
+          { merge: true }
+        );
+      } else {
+        // Groups handled via members update
+        const newMembers = {
+          ...data.members,
+          [invite.invitedUserIdentifier]: UserRoleNumbers.MEMBER,
+        };
+        delete newMembers[invite.invitedUserLiteral];
+        await handleGroupMembersUpdate(doc.id, newMembers, {
+          ...data,
+          id: doc.id,
+          ref: doc.ref,
+        } as Group);
+      }
     } else if (invite.inviteStatus === InviteStatus.REJECTED) {
       notificationEventType = NotificationEventType.INVITE_REJECTED;
       await doc.ref.set(

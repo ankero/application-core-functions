@@ -12,6 +12,7 @@ import {
   handleAddMultipleMembersToEntity,
   handleRemoveMultipleMembersFromEntity,
   handleAddMultipleGroupsToEntity,
+  getPublicProfilesForMemberList,
 } from "./entityMemberHandlers";
 import { updateObjectReferences } from "./references";
 import { getUserPublicProfile } from "./user";
@@ -50,6 +51,7 @@ export async function getProjectById(
     return {
       ...project.data(),
       id: projectId,
+      ref: project.ref,
     } as Project;
   } catch (error) {
     throw error;
@@ -127,19 +129,16 @@ export async function handleNewProjectCreated(
 export async function handleExistingProjectUpdated(
   projectId: string,
   project: Project,
-  prevProject: Project,
-  projectRef: admin.firestore.DocumentReference
-): Promise<any> {
+  prevProject: Project
+): Promise<void> {
   try {
-    // This is a old Project, check for changes
     const userInvokedChanges =
       project.name !== prevProject.name ||
       project.description !== prevProject.description;
     const { removedMembers, addedMembers } = compareOldAndNewEntityMembers(
-      project,
-      prevProject
+      project.members,
+      prevProject.members
     );
-    let newMemberList = {} as MembershipObject;
 
     if (userInvokedChanges) {
       await updateObjectReferences(
@@ -148,6 +147,36 @@ export async function handleExistingProjectUpdated(
         DATABASE.projects.collectionName
       );
     }
+
+    if (
+      Object.keys(removedMembers).length > 0 ||
+      Object.keys(addedMembers).length > 0
+    ) {
+      const formattedMemberList = await getPublicProfilesForMemberList(
+        project.members,
+        project.formattedMemberList
+      );
+
+      await updateProject(projectId, {
+        formattedMemberList,
+      });
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function handleProjectMembersUpdate(
+  projectId: string,
+  newMembers: MembershipObject,
+  project: Project
+): Promise<{ hasChangesInMembers: boolean; updatedMembers: MembershipObject }> {
+  try {
+    const { removedMembers, addedMembers } = compareOldAndNewEntityMembers(
+      newMembers,
+      project.members
+    );
+    let newMemberList = addedMembers;
 
     // Remove members that are indicated to be removed
     if (Object.keys(removedMembers).length > 0) {
@@ -185,7 +214,7 @@ export async function handleExistingProjectUpdated(
           project.updatedBy || project.createdBy,
           inviteTargetPreview,
           inviter,
-          projectRef
+          project.ref
         );
       }
 
@@ -193,16 +222,19 @@ export async function handleExistingProjectUpdated(
         const { members } = await handleAddMultipleGroupsToEntity(
           groupIds,
           project.members,
-          projectRef,
+          project.ref,
           false
         );
         newMemberList = { ...newMemberList, ...members };
       }
     }
+
+    if (Object.keys(newMemberList).length > 0) {
+      await project.ref.set({ members: newMemberList }, { merge: true });
+    }
+
     return {
-      hasChangesInMembers:
-        Object.keys(removedMembers).length > 0 ||
-        Object.keys(addedMembers).length > 0,
+      hasChangesInMembers: Object.keys(newMemberList).length > 0,
       updatedMembers: newMemberList,
     };
   } catch (error) {

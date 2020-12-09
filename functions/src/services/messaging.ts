@@ -15,7 +15,7 @@ async function getDevicesForUser(userId: string): Promise<any> {
       .get();
     if (querySnapshot.empty) {
       console.log(`No devices for user: ${userId}`);
-      return;
+      return [];
     }
 
     const devices = [] as any;

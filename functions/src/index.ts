@@ -15,12 +15,14 @@ import {
   onGroupCreate,
   onGroupDelete,
   onGroupUpdate,
+  updateGroupMembers,
   leaveGroup,
 } from "./groups";
 import {
   onProjectCreate,
   onProjectDelete,
   onProjectUpdate,
+  updateProjectMembers,
   leaveProject,
 } from "./projects";
 import { identifies } from "./analytics";
@@ -36,10 +38,12 @@ export {
   onGroupCreate,
   onGroupDelete,
   onGroupUpdate,
+  updateGroupMembers,
   leaveGroup,
   onProjectCreate,
   onProjectDelete,
   onProjectUpdate,
+  updateProjectMembers,
   leaveProject,
   onInvitationUpdate,
   onNotificationWrite,

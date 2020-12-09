@@ -106,6 +106,7 @@ export interface Project {
   members: MembershipObject;
   formattedMemberList: Array<PublicUserProfile>;
   processingError?: string | null;
+  ref: admin.firestore.DocumentReference;
 }
 
 export interface Group {
@@ -117,6 +118,7 @@ export interface Group {
   members: MembershipObject;
   formattedMemberList: Array<PublicUserProfile>;
   processingError?: string | null;
+  ref: admin.firestore.DocumentReference;
 }
 
 export interface AuditLog {
