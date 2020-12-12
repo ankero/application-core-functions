@@ -39,23 +39,17 @@ export async function createOrUpdateProfilePublicData(
 
 export async function deleteProfile(userId: string): Promise<void> {
   try {
-    await db
-      .doc(
-        DATABASE.users.documents.userPublicProfile.replace("{entityId}", userId)
-      )
-      .delete();
-    await deleteCollection(
-      DATABASE.users.collections.userAuditLogs.collectionName.replace(
-        "{entityId}",
-        userId
-      )
-    );
-    await deleteCollection(
-      DATABASE.users.collections.userPredictions.collectionName.replace(
-        "{entityId}",
-        userId
-      )
-    );
+    const { collections } = DATABASE.users as { [key: string]: any };
+    const deleteSubcollectionsPromises = [] as Array<Promise<void>>;
+    Object.keys(collections).forEach((key: string) => {
+      if (!collections.hasOwnProperty(key)) return;
+      const { collectionName } = collections[key];
+      deleteSubcollectionsPromises.push(
+        deleteCollection(collectionName.replace("{entityId}", userId))
+      );
+    });
+
+    await Promise.all(deleteSubcollectionsPromises);
     await db
       .doc(DATABASE.users.documents.user.replace("{entityId}", userId))
       .delete();
