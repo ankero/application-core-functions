@@ -37,6 +37,9 @@ export const DATABASE = {
       userPredictions: "/users/{entityId}/predictions/predictions",
     },
     collections: {
+      userPublicProfile: {
+        collectionName: "/users/{entityId}/publicProfile/",
+      },
       userAuditLogs: {
         collectionName: "/users/{entityId}/auditLog",
       },
