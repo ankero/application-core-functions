@@ -25,6 +25,20 @@ export const escapeDotAddress = (value: string) => {
   return `\`${value.replace(/\./g, "\\.")}\``;
 };
 
+export const validateNoInvitePromotees = (
+  newMembers: MembershipObject,
+  oldMembers: MembershipObject
+) => {
+  Object.keys(oldMembers).forEach((memberId: any) => {
+    if (
+      newMembers[memberId] > oldMembers[memberId] &&
+      oldMembers[memberId] === UserRoleNumbers.INVITED
+    ) {
+      throw new Error("Cannot promote user who is still an invitee");
+    }
+  });
+};
+
 export const getValidMemberObject = (
   entityId: string,
   members: MembershipObject

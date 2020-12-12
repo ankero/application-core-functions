@@ -142,7 +142,11 @@ export async function handleExistingGroupUpdated(
     const userInvokedChanges =
       group.name !== prevGroup.name ||
       group.description !== prevGroup.description;
-    const { removedMembers, addedMembers } = compareOldAndNewEntityMembers(
+    const {
+      removedMembers,
+      addedMembers,
+      updatedPermissions,
+    } = compareOldAndNewEntityMembers(
       group.members,
       prevGroup.members,
       groupId
@@ -163,7 +167,8 @@ export async function handleExistingGroupUpdated(
 
     if (
       Object.keys(removedMembers).length > 0 ||
-      Object.keys(addedMembers).length > 0
+      Object.keys(addedMembers).length > 0 ||
+      Object.keys(updatedPermissions).length > 0
     ) {
       const formattedMemberList = await getPublicProfilesForMemberList(
         group.members,
@@ -185,13 +190,13 @@ export async function handleGroupMembersUpdate(
   group: Group
 ): Promise<{ hasChangesInMembers: boolean; updatedMembers: MembershipObject }> {
   try {
-    const { removedMembers, addedMembers } = compareOldAndNewEntityMembers(
-      newMembers,
-      group.members,
-      groupId
-    );
+    const {
+      removedMembers,
+      addedMembers,
+      updatedPermissions,
+    } = compareOldAndNewEntityMembers(newMembers, group.members, groupId);
 
-    let newMemberList = newMembers;
+    let newMemberList = { ...newMembers, ...updatedPermissions };
     const removedNonInvitedMembers = [] as Array<string>;
     const addedNonInvitedMembers = [] as Array<string>;
 

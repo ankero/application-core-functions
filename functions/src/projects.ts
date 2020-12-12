@@ -12,7 +12,10 @@ import {
   removeProjectMember,
   updateProject,
 } from "./services/projects";
-import { getValidMemberObject } from "./services/validators";
+import {
+  getValidMemberObject,
+  validateNoInvitePromotees,
+} from "./services/validators";
 
 async function handleProjectError(
   entityId: string,
@@ -127,6 +130,8 @@ export const updateProjectMembers = functions.https.onCall(
       if (userRole < UserRoleNumbers.EDITOR) {
         throw new Error("UNAUTHORIZED");
       }
+
+      validateNoInvitePromotees(members, project.members);
 
       await handleProjectMembersUpdate(
         projectId,

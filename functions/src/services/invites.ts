@@ -164,6 +164,7 @@ export async function claimInvitesForUser(user: User): Promise<void> {
       const notificationPromises = [] as Array<Promise<void>>;
       const batch = db.batch();
       querySnapshot.forEach(async (snapshot) => {
+        const id = snapshot.id;
         const invite = snapshot.data() as Invite;
         // Claim invite
         batch.set(
@@ -179,6 +180,7 @@ export async function claimInvitesForUser(user: User): Promise<void> {
           createNotificationFromInvite({
             ...invite,
             invitedUserIdentifier: user.uid,
+            id,
           } as Invite)
         );
       });

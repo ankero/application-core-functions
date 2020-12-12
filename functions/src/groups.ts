@@ -13,7 +13,10 @@ import { deleteInvitesForEntity } from "./services/invites";
 import { Group, EntityType, UserRoleNumbers } from "./interfaces";
 import { getPublicProfilesForMemberList } from "./services/entityMemberHandlers";
 import { deleteObjectReferences } from "./services/references";
-import { getValidMemberObject } from "./services/validators";
+import {
+  getValidMemberObject,
+  validateNoInvitePromotees,
+} from "./services/validators";
 
 async function handleGroupError(
   entityId: string,
@@ -142,6 +145,8 @@ export const updateGroupMembers = functions.https.onCall(
       if (userRole < UserRoleNumbers.EDITOR) {
         throw new Error("UNAUTHORIZED");
       }
+
+      validateNoInvitePromotees(members, group.members);
 
       await handleGroupMembersUpdate(
         groupId,

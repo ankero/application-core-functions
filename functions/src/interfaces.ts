@@ -167,6 +167,7 @@ export interface ProfileItem {
 export interface OldAndNewEntityMemberComparison {
   removedMembers: MembershipObject;
   addedMembers: MembershipObject;
+  updatedPermissions: MembershipObject;
 }
 
 export interface Notification {

@@ -135,10 +135,11 @@ export async function handleExistingProjectUpdated(
     const userInvokedChanges =
       project.name !== prevProject.name ||
       project.description !== prevProject.description;
-    const { removedMembers, addedMembers } = compareOldAndNewEntityMembers(
-      project.members,
-      prevProject.members
-    );
+    const {
+      removedMembers,
+      addedMembers,
+      updatedPermissions,
+    } = compareOldAndNewEntityMembers(project.members, prevProject.members);
 
     if (userInvokedChanges) {
       await updateObjectReferences(
@@ -150,7 +151,8 @@ export async function handleExistingProjectUpdated(
 
     if (
       Object.keys(removedMembers).length > 0 ||
-      Object.keys(addedMembers).length > 0
+      Object.keys(addedMembers).length > 0 ||
+      Object.keys(updatedPermissions).length > 0
     ) {
       const formattedMemberList = await getPublicProfilesForMemberList(
         project.members,
@@ -172,11 +174,12 @@ export async function handleProjectMembersUpdate(
   project: Project
 ): Promise<{ hasChangesInMembers: boolean; updatedMembers: MembershipObject }> {
   try {
-    const { removedMembers, addedMembers } = compareOldAndNewEntityMembers(
-      newMembers,
-      project.members
-    );
-    let newMemberList = addedMembers;
+    const {
+      removedMembers,
+      addedMembers,
+      updatedPermissions,
+    } = compareOldAndNewEntityMembers(newMembers, project.members);
+    let newMemberList = { ...addedMembers, ...updatedPermissions };
 
     // Remove members that are indicated to be removed
     if (Object.keys(removedMembers).length > 0) {

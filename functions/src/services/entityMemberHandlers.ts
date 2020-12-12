@@ -37,8 +37,26 @@ export function getCompositeId(entityId: string) {
   return GROUP_COMPOSITE_ID_PREFIX + entityId;
 }
 
-export function isInFormattedMemberList(list: Array<any>, entityId: string) {
-  return list.find((member) => member.id === entityId);
+export function rolesToNumbers(role: keyof UserRoleNumbers): UserRoleNumbers {
+  return Number(UserRoleNumbers[role as any]);
+}
+
+export function isInFormattedMemberList(
+  members: MembershipObject,
+  list: Array<any>,
+  entityId: string
+) {
+  return list.find((member) => {
+    const role = member.role;
+    console.log(
+      `isInFormattedMemberList: ${role}, ${rolesToNumbers(role)} <> ${
+        members[member.id]
+      }`
+    );
+    return (
+      member.id === entityId && rolesToNumbers(role) === members[member.id]
+    );
+  });
 }
 
 export async function handleRemoveMultipleMembersFromEntity(
@@ -197,7 +215,9 @@ export async function getPublicProfilesForMemberList(
         member.entityType === EntityType.GROUP
           ? getCompositeId(member.id)
           : member.id;
-      return isInMembers(members, id);
+      const role = member.role as any;
+      const roleNumber = rolesToNumbers(role);
+      return isInMembers(members, id) && members[id] === roleNumber;
     }
   );
 
@@ -220,12 +240,13 @@ export async function getPublicProfilesForMemberList(
     acceptedMembers.forEach((memberId) => {
       if (
         !isCompositeId(memberId) &&
-        !isInFormattedMemberList(prevFormattedMemberList, memberId)
+        !isInFormattedMemberList(members, prevFormattedMemberList, memberId)
       ) {
         userIds.push(memberId);
       } else if (
         isCompositeId(memberId) &&
         !isInFormattedMemberList(
+          members,
           prevFormattedMemberListWithMembers,
           getPureId(memberId)
         )
@@ -278,6 +299,7 @@ export function compareOldAndNewEntityMembers(
 ): OldAndNewEntityMemberComparison {
   const removedMembers = {} as MembershipObject;
   const addedMembers = {} as MembershipObject;
+  const updatedPermissions = {} as MembershipObject;
 
   // Find new invited users
   Object.keys(newMembers).forEach((memberId: any) => {
@@ -301,7 +323,13 @@ export function compareOldAndNewEntityMembers(
     }
   });
 
-  return { removedMembers, addedMembers };
+  Object.keys(oldMembers).forEach((memberId: any) => {
+    if (oldMembers[memberId] !== newMembers[memberId]) {
+      updatedPermissions[memberId] = newMembers[memberId];
+    }
+  });
+
+  return { removedMembers, addedMembers, updatedPermissions };
 }
 
 export async function handleAddMultipleGroupsToEntity(
