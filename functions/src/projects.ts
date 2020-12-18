@@ -16,6 +16,7 @@ import {
   getValidMemberObject,
   validateNoInvitePromotees,
 } from "./services/validators";
+import { removeMultipleUserPermissions } from "./services/user";
 
 async function handleProjectError(
   entityId: string,
@@ -86,8 +87,14 @@ export const onProjectDelete = functions.firestore
   .document(DATABASE.projects.documents.project)
   .onDelete(async (change, context) => {
     const { entityId } = context.params;
-
+    const project = change.data() as Project;
     try {
+      const userIds = Object.keys(project.members);
+      await removeMultipleUserPermissions(
+        userIds,
+        entityId,
+        EntityType.PROJECT
+      );
       await deleteInvitesForEntity(entityId, EntityType.PROJECT);
     } catch (error) {
       throw error;

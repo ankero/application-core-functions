@@ -8,6 +8,7 @@ import {
   onUserCreated,
   onUserDeleted,
   onUserUpdated,
+  onUserClaimsChange,
   acceptPrivacyPolicy,
   downloadMyData,
 } from "./users";
@@ -25,6 +26,12 @@ import {
   updateProjectMembers,
   leaveProject,
 } from "./projects";
+import {
+  onDocumentCreate,
+  onDocumentUpdate,
+  onDocumentDelete,
+  reactToDocument,
+} from "./documents";
 import { identifies } from "./analytics";
 import { onInvitationUpdate } from "./invitations";
 import { onNotificationWrite, markAllNotificationsRead } from "./notifications";
@@ -33,6 +40,7 @@ export {
   onUserUpdated,
   onUserCreated,
   onUserDeleted,
+  onUserClaimsChange,
   acceptPrivacyPolicy,
   downloadMyData,
   onGroupCreate,
@@ -48,4 +56,8 @@ export {
   onInvitationUpdate,
   onNotificationWrite,
   markAllNotificationsRead,
+  onDocumentCreate,
+  onDocumentUpdate,
+  onDocumentDelete,
+  reactToDocument,
 };

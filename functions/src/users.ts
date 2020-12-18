@@ -14,8 +14,10 @@ import {
 } from "./services/user";
 import { deleteUserBucket } from "./services/storage";
 import { claimInvitesForUser } from "./services/invites";
-import { AuditLogEvents } from "./interfaces";
+import { AuditLogEvents, UserPermissions } from "./interfaces";
 import { updateObjectReferences } from "./services/references";
+import { handleEntityClaims } from "./services/entityMemberHandlers";
+import isEqual = require("lodash.isequal");
 
 export const onUserCreated = functions.auth.user().onCreate(async (user) => {
   const userSettings = await getApplicationUserConfiguration();
@@ -75,8 +77,14 @@ export const onUserUpdated = functions.firestore
 
       // Get document
       const document = change.after.exists ? change.after.data() : null;
+      const oldDocument = change.before.exists ? change.before.data() : null;
 
       if (!document) {
+        return;
+      }
+
+      if (oldDocument && document.updatedMillis === oldDocument.updatedMillis) {
+        console.log("No updates to user.updatedMillis > exiting");
         return;
       }
 
@@ -106,7 +114,26 @@ export const onUserUpdated = functions.firestore
         });
       }
     } catch (error) {
-      throw Error(error);
+      throw error;
+    }
+  });
+
+export const onUserClaimsChange = functions.firestore
+  .document(DATABASE.users.documents.userPermissions)
+  .onWrite(async (change, context) => {
+    try {
+      const { entityId } = context.params;
+      const beforeData = change.before.data() || ({} as UserPermissions);
+      const afterData = change.after.data() || ({} as UserPermissions);
+
+      if (isEqual(beforeData, afterData)) {
+        console.log("No updates");
+        return;
+      }
+
+      await handleEntityClaims(entityId, afterData);
+    } catch (error) {
+      throw error;
     }
   });
 

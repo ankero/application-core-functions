@@ -13,13 +13,18 @@ import {
   Group,
   Project,
   MembershipObject,
+  UserPermissions,
 } from "../interfaces";
 import { getMultipleGroupsById } from "./group";
 import {
   createOrUpdateInvite,
   deleteUnusedInviteForUserPerEntity,
 } from "./invites";
-import { getUserPublicProfile, getUsersBasedOnEmailOrNumber } from "./user";
+import {
+  createOrUpdateProfile,
+  getUserPublicProfile,
+  getUsersBasedOnEmailOrNumber,
+} from "./user";
 
 export function isInMembers(members: MembershipObject, entityId: string) {
   return members.hasOwnProperty(entityId);
@@ -46,16 +51,17 @@ export function isInFormattedMemberList(
   list: Array<any>,
   entityId: string
 ) {
+  const pureId = isCompositeId(entityId) ? getPureId(entityId) : entityId;
   return list.find((member) => {
     const role = member.role;
+
     console.log(
-      `isInFormattedMemberList: ${role}, ${rolesToNumbers(role)} <> ${
-        members[member.id]
-      }`
+      `isInFormattedMemberList:${entityId}, ${
+        member.id
+      }, ${role}, ${rolesToNumbers(role)} <> ${members[pureId]}`
     );
-    return (
-      member.id === entityId && rolesToNumbers(role) === members[member.id]
-    );
+
+    return member.id === pureId && rolesToNumbers(role) === members[entityId];
   });
 }
 
@@ -209,7 +215,7 @@ export async function getPublicProfilesForMemberList(
   const formattedMemberList = [] as Array<PublicUserProfile>;
 
   // Filter out users that have been removed in this cycle
-  const prevFormattedMemberListWithMembers = prevFormattedMemberList.filter(
+  const prevFormattedMemberListWithActiveMembers = prevFormattedMemberList.filter(
     (member) => {
       const id =
         member.entityType === EntityType.GROUP
@@ -238,17 +244,22 @@ export async function getPublicProfilesForMemberList(
     });
 
     acceptedMembers.forEach((memberId) => {
+      console.log(`Check is entity in members; ${memberId}`);
       if (
         !isCompositeId(memberId) &&
-        !isInFormattedMemberList(members, prevFormattedMemberList, memberId)
+        !isInFormattedMemberList(
+          members,
+          prevFormattedMemberListWithActiveMembers,
+          memberId
+        )
       ) {
         userIds.push(memberId);
       } else if (
         isCompositeId(memberId) &&
         !isInFormattedMemberList(
           members,
-          prevFormattedMemberListWithMembers,
-          getPureId(memberId)
+          prevFormattedMemberListWithActiveMembers,
+          memberId
         )
       ) {
         groupIds.push(memberId);
@@ -286,9 +297,15 @@ export async function getPublicProfilesForMemberList(
       });
     }
 
-    return [...prevFormattedMemberListWithMembers, ...formattedMemberList];
+    return [
+      ...prevFormattedMemberListWithActiveMembers,
+      ...formattedMemberList,
+    ];
   } catch (error) {
-    return [...prevFormattedMemberListWithMembers, ...formattedMemberList];
+    return [
+      ...prevFormattedMemberListWithActiveMembers,
+      ...formattedMemberList,
+    ];
   }
 }
 
@@ -379,4 +396,24 @@ export async function handleAddMultipleGroupsToEntity(
   } catch (error) {
     throw error;
   }
+}
+
+export async function handleEntityClaims(
+  userId: string,
+  permissions: UserPermissions
+): Promise<void> {
+  const stringedPermissions = JSON.stringify(permissions);
+  if (stringedPermissions.length > 1000) {
+    console.error(
+      "New custom claims object string > 1000 characters",
+      stringedPermissions
+    );
+    return;
+  }
+  console.log(`Setting custom claims for ${userId} : ${stringedPermissions}`);
+  await admin.auth().setCustomUserClaims(userId, { permissions });
+  console.log("Updating user profile permissionUpdatedMillis");
+  await createOrUpdateProfile(userId, {
+    permissionUpdatedMillis: Date.now(),
+  });
 }

@@ -2,9 +2,17 @@ import * as admin from "firebase-admin";
 import { uniqueNamesGenerator, colors, animals } from "unique-names-generator";
 import { DATABASE } from "../constants";
 import { isEmailOrNumber } from "./validators";
-import { PublicUserProfile, User, UserIdentifierType } from "../interfaces";
+import {
+  EntityType,
+  MembershipObject,
+  PublicUserProfile,
+  User,
+  UserIdentifierType,
+  UserRoleNumbers,
+} from "../interfaces";
 import { deleteCollection } from "./collection";
 import { saveJSONToStorage } from "./storage";
+import { isCompositeId } from "./entityMemberHandlers";
 
 // database
 const db = admin.firestore();
@@ -30,6 +38,90 @@ export async function createOrUpdateProfilePublicData(
     await db
       .doc(
         DATABASE.users.documents.userPublicProfile.replace("{entityId}", userId)
+      )
+      .set(data, { merge: true });
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function removeMultipleUserPermissions(
+  members: Array<string>,
+  targetEntityId: string,
+  targetEntityType: EntityType
+): Promise<void> {
+  try {
+    const entityCompositeId = [`${targetEntityType}:${targetEntityId}`] as any;
+    const updatePromises = [] as Array<Promise<any>>;
+
+    members.forEach((userId) => {
+      if (isCompositeId(userId)) return;
+      const address = DATABASE.users.documents.userPermissions.replace(
+        "{entityId}",
+        userId
+      );
+      console.log(`Delete permission to user ${userId} to address: ${address}`);
+      updatePromises.push(
+        db.doc(address).set(
+          {
+            [entityCompositeId]: admin.firestore.FieldValue.delete(),
+          },
+          {
+            merge: true,
+          }
+        )
+      );
+    });
+    await Promise.all(updatePromises);
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function updateMultipleUserPermissions(
+  members: MembershipObject,
+  targetEntityId: string,
+  targetEntityType: EntityType
+): Promise<void> {
+  try {
+    const entityCompositeId = [`${targetEntityType}:${targetEntityId}`] as any;
+    const updatePromises = [] as Array<Promise<any>>;
+
+    Object.keys(members).forEach((userId) => {
+      console.log(`Check user: ${userId}`);
+      if (isCompositeId(userId)) return;
+      if (members[userId] < UserRoleNumbers.MEMBER) return;
+
+      const address = DATABASE.users.documents.userPermissions.replace(
+        "{entityId}",
+        userId
+      );
+      console.log(`Add permission to user ${userId} to address: ${address}`);
+      updatePromises.push(
+        db.doc(address).set(
+          {
+            [entityCompositeId]: members[userId],
+          },
+          {
+            merge: true,
+          }
+        )
+      );
+    });
+    await Promise.all(updatePromises);
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function updateUserPermissions(
+  userId: string,
+  data: PublicUserProfile
+): Promise<void> {
+  try {
+    await db
+      .doc(
+        DATABASE.users.documents.userPermissions.replace("{entityId}", userId)
       )
       .set(data, { merge: true });
   } catch (error) {

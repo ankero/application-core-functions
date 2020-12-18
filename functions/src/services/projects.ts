@@ -15,7 +15,11 @@ import {
   getPublicProfilesForMemberList,
 } from "./entityMemberHandlers";
 import { updateObjectReferences } from "./references";
-import { getUserPublicProfile } from "./user";
+import {
+  getUserPublicProfile,
+  removeMultipleUserPermissions,
+  updateMultipleUserPermissions,
+} from "./user";
 
 // database
 const db = admin.firestore();
@@ -117,6 +121,14 @@ export async function handleNewProjectCreated(
       newMemberList = { ...newMemberList, ...members };
     }
 
+    if (Object.keys(project.members).length > 0) {
+      await updateMultipleUserPermissions(
+        project.members,
+        projectId,
+        EntityType.PROJECT
+      );
+    }
+
     return {
       hasChangesInMembers: userIds.length > 0 || groupIds.length > 0,
       updatedMembers: newMemberList,
@@ -192,6 +204,11 @@ export async function handleProjectMembersUpdate(
       userIdsToRemove.forEach((userId) => {
         newMemberList[userId] = admin.firestore.FieldValue.delete();
       });
+      await removeMultipleUserPermissions(
+        userIdsToRemove,
+        projectId,
+        EntityType.PROJECT
+      );
     }
 
     // Add members that are indicated to be added
@@ -234,6 +251,12 @@ export async function handleProjectMembersUpdate(
 
     if (Object.keys(newMemberList).length > 0) {
       await project.ref.set({ members: newMemberList }, { merge: true });
+      console.log(`Manage new memberlist: ${JSON.stringify(newMemberList)}`);
+      await updateMultipleUserPermissions(
+        newMemberList,
+        projectId,
+        EntityType.PROJECT
+      );
     }
 
     return {

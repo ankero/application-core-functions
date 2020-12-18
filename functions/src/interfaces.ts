@@ -13,6 +13,11 @@ export enum EntityType {
   PROJECT = "project",
 }
 
+export enum DocumentType {
+  TASK = "TASK",
+  COMMENT = "COMMENT",
+}
+
 export enum NotificationEventType {
   INVITATION_RECEIVED = "INVITATION_RECEIVED",
   INVITE_ACCEPTED = "INVITE_ACCEPTED",
@@ -119,6 +124,32 @@ export interface Group {
   formattedMemberList: Array<PublicUserProfile>;
   processingError?: string | null;
   ref: admin.firestore.DocumentReference;
+}
+
+export interface Reaction {
+  userId: string;
+  reaction: string;
+  updatedMillis: number;
+}
+
+export interface Document {
+  id?: string;
+  title?: string;
+  content?: string;
+  createdBy: string;
+  updatedBy?: string;
+  projectId: string;
+  type: DocumentType;
+  children: Array<string>;
+  ancestors: Array<string>;
+  reactions: Array<Reaction>;
+  author?: PublicUserProfile;
+  processingError?: string | null;
+  ref: admin.firestore.DocumentReference;
+}
+
+export interface UserPermissions {
+  [key: string]: boolean | number;
 }
 
 export interface AuditLog {
