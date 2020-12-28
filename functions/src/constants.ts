@@ -88,3 +88,4 @@ export const DATABASE = {
 };
 
 export const GROUP_COMPOSITE_ID_PREFIX = `${EntityType.GROUP}:`;
+export const STORAGE_PREFIX = "storage:";

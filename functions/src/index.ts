@@ -31,6 +31,7 @@ import {
   onDocumentUpdate,
   onDocumentDelete,
   reactToDocument,
+  moveDocumentToNewParent,
 } from "./documents";
 import { identifies } from "./analytics";
 import { onInvitationUpdate } from "./invitations";
@@ -60,4 +61,5 @@ export {
   onDocumentUpdate,
   onDocumentDelete,
   reactToDocument,
+  moveDocumentToNewParent,
 };

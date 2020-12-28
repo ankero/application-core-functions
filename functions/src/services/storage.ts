@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
-import { STORAGE } from "../constants";
+import { STORAGE, STORAGE_PREFIX } from "../constants";
 import { Parser } from "json2csv";
+import { Document, DocumentType } from "../interfaces";
 
 const fs = require("fs-extra");
 const path = require("path");
@@ -22,6 +23,22 @@ export async function deleteUserBucket(userId: string) {
       prefix: STORAGE.userPrivateFiles.replace("{entityId}", userId),
     });
     return true;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function deleteDocumentFiles(document: Document): Promise<void> {
+  try {
+    const { type, url } = document;
+    if (type !== DocumentType.FILE) return;
+    if (!url || !url.startsWith(STORAGE_PREFIX)) return;
+    const filePath = url.replace(STORAGE_PREFIX, "");
+    console.log(`DELETE file from path: ${filePath}`);
+    await bucket.deleteFiles({
+      force: true,
+      prefix: filePath,
+    });
   } catch (error) {
     throw error;
   }

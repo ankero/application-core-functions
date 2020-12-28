@@ -16,6 +16,7 @@ export enum EntityType {
 export enum DocumentType {
   TASK = "TASK",
   COMMENT = "COMMENT",
+  FILE = "FILE",
 }
 
 export enum NotificationEventType {
@@ -56,6 +57,11 @@ export enum AuditLogEvents {
 }
 export interface MembershipObject {
   [id: string]: UserRoleNumbers | admin.firestore.FieldValue;
+}
+
+export interface Tag {
+  key: string;
+  label: string;
 }
 
 export interface PublicUserProfile {
@@ -138,10 +144,12 @@ export interface Document {
   content?: string;
   createdBy: string;
   updatedBy?: string;
+  url?: string;
   projectId: string;
   type: DocumentType;
   children: Array<string>;
   ancestors: Array<string>;
+  tags: Array<Tag>;
   reactions: Array<Reaction>;
   author?: PublicUserProfile;
   processingError?: string | null;
